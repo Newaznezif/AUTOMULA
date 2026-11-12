@@ -105,7 +105,8 @@ test.describe("AUTOMULA authenticated product workflows", () => {
       expect(uploaded.status()).toBe(201);
       const body = await uploaded.json();
       documentId = body.document.id;
-      expect(["pending", "ready", "failed"]).toContain(body.document.processing_status);\n      expect(body.document.storage_verified).toBe(true);
+      expect(["pending", "ready", "failed"]).toContain(body.document.processing_status);
+      expect(body.document.storage_verified).toBe(true);
 
       const listed = await page.request.get("/api/documents");
       expect(listed.ok()).toBeTruthy();
