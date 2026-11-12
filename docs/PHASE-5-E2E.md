@@ -21,11 +21,11 @@ pnpm --filter @automula/web exec playwright install chromium
 E2E_BASE_URL=https://<staging-host> E2E_EMAIL=<test-account> E2E_PASSWORD=<test-password> pnpm --filter @automula/web test:e2e
 ```
 
-The Playwright suite covers login, invalid-credential rejection, optional password recovery initiation, knowledge create/read/update/delete persistence, optional cross-account isolation, document upload/storage-object verification/list/delete persistence, AI source attribution against a unique saved fact (including protection of prefilled fields), and the dashboard-to-extension pairing bridge contract. Tests clean up their created records in `finally` blocks. Full recovery-link consumption and password replacement still require an accessible test mailbox and are a release acceptance check.
+The Playwright suite covers login, invalid-credential rejection, optional password recovery initiation, knowledge create/read/update/delete persistence, optional cross-account isolation, document upload/storage-object verification/list/delete persistence, AI source attribution against a unique saved fact (including protection of prefilled fields), the dashboard-to-extension pairing bridge contract (stubbed), and the compiled extension content-script behavior in Chromium (field detection, explicit approval enforcement, and preservation of existing values). Tests clean up their created records in `finally` blocks. Full recovery-link consumption and password replacement still require an accessible test mailbox and are a release acceptance check.
 
 ## Manual Chrome extension acceptance
 
-The pairing bridge test above uses a controlled browser API stub. It does not prove Chrome Web Store installation, real extension messaging, or DOM behavior. Complete these checks in a real Chrome profile with the published extension installed:
+The dashboard pairing bridge test uses a controlled browser API stub; it does not prove real extension messaging. The compiled content-script test does execute the production-built content script in Chromium, but does not prove extension installation, service-worker messaging, or permissions. Complete these remaining checks in a real Chrome profile with the unpacked extension installed:
 
 1. Sign in to the staging dashboard and open **Extension**.
 2. Connect the extension. Confirm the side panel changes to **Account connected**.
@@ -49,4 +49,4 @@ The pairing bridge test above uses a controlled browser API stub. It does not pr
 
 ## Current test limitations
 
-Password recovery requires an accessible test mailbox; the workflow deliberately does not trigger password-reset email for a personal account. Configure Supabase Auth redirect URLs for the staging origin and test recovery through a dedicated mailbox. Real Chrome extension DOM testing remains a manual release gate until a stable unpacked-extension browser harness is added.
+Password recovery requires an accessible test mailbox; the workflow deliberately does not trigger password-reset email for a personal account. Configure Supabase Auth redirect URLs for the staging origin and test recovery through a dedicated mailbox. Real extension installation, service-worker pairing, and permission lifecycle remain manual release gates; compiled content-script DOM behavior is covered automatically.
