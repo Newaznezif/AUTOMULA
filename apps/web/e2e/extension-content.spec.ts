@@ -2,6 +2,8 @@ import { test, expect } from "@playwright/test";
 import { fileURLToPath } from "node:url";
 
 const compiledContentScript = fileURLToPath(new URL("../../extension/dist/content.js", import.meta.url));
+type RuntimeMessageListener = (message: unknown, sender: unknown, sendResponse: (response: unknown) => void) => void;
+type FixtureWindow = Window & { __automulaMessage?: RuntimeMessageListener };
 
 test("compiled extension content script detects fields and fills only approved empty values", async ({ page }) => {
   await page.setContent(`
@@ -24,14 +26,14 @@ test("compiled extension content script detects fields and fills only approved e
     </body></html>
   `);
 
-  await page.addInitScript(() => {
+  await page.evaluate(() => {
     Object.defineProperty(window, "chrome", {
       configurable: true,
       value: {
         runtime: {
           onMessage: {
-            addListener(listener: (message: unknown, sender: unknown, sendResponse: (response: unknown) => void) => void) {
-              (window as Window & { __automulaMessage?: typeof listener }).__automulaMessage = listener;
+            addListener(listener: RuntimeMessageListener) {
+              (window as FixtureWindow).__automulaMessage = listener;
             }
           }
         }
@@ -41,7 +43,7 @@ test("compiled extension content script detects fields and fills only approved e
   await page.addScriptTag({ path: compiledContentScript });
 
   const detected = await page.evaluate(() => {
-    const listener = (window as Window & { __automulaMessage?: (message: unknown, sender: unknown, sendResponse: (response: unknown) => void) => void }).__automulaMessage;
+    const listener = (window as FixtureWindow).__automulaMessage;
     if (!listener) throw new Error("Content script did not register its runtime message listener.");
     let response: unknown;
     listener({ type: "AUTOMULA_DETECT_FORM" }, {}, value => { response = value; });
@@ -54,7 +56,7 @@ test("compiled extension content script detects fields and fills only approved e
   expect(detected.form.fields[2].fieldType).toBe("select");
 
   const fillResponse = await page.evaluate(() => {
-    const listener = (window as Window & { __automulaMessage?: (message: unknown, sender: unknown, sendResponse: (response: unknown) => void) => void }).__automulaMessage!;
+    const listener = (window as FixtureWindow).__automulaMessage!;
     let response: unknown;
     listener({
       type: "AUTOMULA_FILL_APPROVED",
