@@ -17,7 +17,7 @@ const nav = [
 
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
   let email = "Workspace preview";
-  let connected = isSupabaseConfigured();
+  const connected = isSupabaseConfigured();
 
   if (connected) {
     const supabase = await createClient();
