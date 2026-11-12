@@ -67,7 +67,7 @@ async function extractText(file: File, bytes: Uint8Array) {
 }
 
 async function processDocument(supabase: SupabaseClient, userId: string, documentId: string, file: File) {
-  if (!process.env.AI_GATEWAY_API_KEY && !process.env.VERCEL_OIDC_TOKEN) {
+  if (!process.env.AI_GATEWAY_API_KEY && !process.env.VERCEL_OIDC_TOKEN && process.env.VERCEL !== "1") {
     return { processing_status: "pending", processing_message: "Uploaded securely. Connect AI Gateway to extract and index this file." };
   }
   try {
