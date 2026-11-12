@@ -37,7 +37,7 @@ type Evidence = { id: string; type: string; label: string; content: string; veri
 
 export async function POST(request: Request) {
   if (!isSupabaseConfigured()) return NextResponse.json({ error: "Supabase is not connected." }, { status: 503 });
-  if (!process.env.AI_GATEWAY_API_KEY && !process.env.VERCEL_OIDC_TOKEN) {
+  if (!process.env.AI_GATEWAY_API_KEY && !process.env.VERCEL_OIDC_TOKEN && process.env.VERCEL !== "1") {
     return NextResponse.json({ error: "AI Gateway authentication is not configured. Connect Vercel OIDC or set AI_GATEWAY_API_KEY in the local environment." }, { status: 503 });
   }
 
