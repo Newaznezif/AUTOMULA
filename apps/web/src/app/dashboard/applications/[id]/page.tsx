@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { PageHeader } from "@/components/page-header";
 import { notFound, redirect } from "next/navigation";
 import { ArrowLeft, ExternalLink, FileCheck2 } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
@@ -40,8 +41,7 @@ export default async function ApplicationDetailPage({ params }: { params: Promis
   const fields = (data.form_fields ?? []) as unknown as Field[];
   return <div>
     <Link href="/dashboard/applications" className="inline-flex items-center gap-2 text-xs text-slate-400 hover:text-white"><ArrowLeft size={14}/> Back to applications</Link>
-    <p className="mt-7 text-xs font-semibold uppercase tracking-[.18em] text-blue-300">Application history</p>
-    <h1 className="mt-2 text-3xl font-semibold tracking-tight">{data.form_title || data.domain}</h1>
+    <div className="mt-6"><PageHeader eyebrow="Application history" title={data.form_title || data.domain} description={String(data.domain)}/></div>
     <div className="mt-3 flex flex-wrap items-center gap-3 text-xs text-slate-500"><span>{data.domain}</span><span>·</span><span>{new Date(data.detected_at).toLocaleString()}</span><span className="rounded-full bg-white/5 px-2.5 py-1 text-slate-300">{data.status}</span></div>
     {data.page_url && <a href={data.page_url} target="_blank" rel="noreferrer" className="mt-3 inline-flex items-center gap-1 text-xs text-blue-300 hover:text-blue-200">Open original page <ExternalLink size={12}/></a>}
     <section className="mt-8 rounded-2xl border border-white/10 bg-slate-900/40 p-5">
