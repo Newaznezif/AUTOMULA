@@ -1,7 +1,7 @@
 import { test, expect } from "@playwright/test";
-import { fileURLToPath } from "node:url";
+import { resolve } from "node:path";
 
-const compiledContentScript = fileURLToPath(new URL("../../extension/dist/content.js", import.meta.url));
+const compiledContentScript = resolve(process.cwd(), "../extension/dist/content.js");
 type RuntimeMessageListener = (message: unknown, sender: unknown, sendResponse: (response: unknown) => void) => void;
 type FixtureWindow = Window & { __automulaMessage?: RuntimeMessageListener };
 
