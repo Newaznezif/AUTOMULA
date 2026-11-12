@@ -1,6 +1,6 @@
 import type { DetectedFormField, FormFieldType, FillResult } from "@automula/shared";
 
-const FIELD_SELECTOR = "input:not([type=hidden]):not([type=password]):not([type=file]),textarea,select";
+const FIELD_SELECTOR = "input:not([type=hidden]):not([type=password]):not([type=file]):not([type=checkbox]):not([type=radio]),textarea,select";
 
 function getLabel(element: Element): string {
   const input = element as HTMLInputElement;
@@ -19,13 +19,12 @@ function getType(element: Element): FormFieldType {
   if (element instanceof HTMLSelectElement) return "select";
   if (element instanceof HTMLInputElement) {
     const type = element.type.toLowerCase();
-    if (["text","email","tel","number","date","checkbox","radio"].includes(type)) return type as FormFieldType;
+    if (["text","email","tel","number","date"].includes(type)) return type as FormFieldType;
   }
   return "unknown";
 }
 
 function hasValue(element: Element): boolean {
-  if (element instanceof HTMLInputElement && ["checkbox","radio"].includes(element.type)) return element.checked;
   if (element instanceof HTMLInputElement || element instanceof HTMLTextAreaElement) return element.value.trim().length > 0;
   if (element instanceof HTMLSelectElement) return element.value.length > 0;
   return false;

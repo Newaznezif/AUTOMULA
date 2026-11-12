@@ -31,7 +31,7 @@ AUTOMULA is a personal information workspace and browser form assistant. It stor
 
 The repository is build-validated in GitHub Actions. The web and extension builds pass on the latest checked CI run.
 
-The live account and AI workflows require a dedicated Supabase project and its configuration. Do not reuse another application's database. AI generation requires Vercel AI Gateway authentication. The extension currently supports manual answer entry and safe filling; extension-to-account authentication and automatic AI suggestion handoff remain integration work.
+The live account and AI workflows require a dedicated Supabase project and its configuration. Do not reuse another application's database. AI generation requires Vercel AI Gateway authentication. The Chrome extension can pair with the signed-in dashboard, send detected form fields to the authenticated AI answer service, display source-backed suggestions, and fill only answers the user explicitly approves. Pairing tokens are kept in Chrome session storage.
 
 AUTOMULA does not claim universal support for every website. Custom JavaScript widgets, cross-origin frames, CAPTCHA, MFA, and website-specific controls can require manual interaction.
 

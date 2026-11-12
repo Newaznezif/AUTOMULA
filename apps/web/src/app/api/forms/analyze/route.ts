@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { generateText, Output, embedMany } from "ai";
 import { z } from "zod";
-import { createClient } from "@/lib/supabase/server";
+import { getRequestContext } from "@/lib/supabase/request";
 import { isSupabaseConfigured } from "@/lib/supabase/env";
 
 export const runtime = "nodejs";
@@ -48,10 +48,9 @@ export async function POST(request: Request) {
   try { page = new URL(parsed.data.pageUrl); } catch { return NextResponse.json({ error: "Invalid page URL." }, { status: 400 }); }
   if (!["http:","https:"].includes(page.protocol)) return NextResponse.json({ error: "Only HTTP and HTTPS pages are supported." }, { status: 400 });
 
-  const supabase = await createClient();
-  const { data: claims } = await supabase.auth.getClaims();
-  const userId = claims?.claims?.sub;
-  if (typeof userId !== "string") return NextResponse.json({ error: "Authentication required." }, { status: 401 });
+  const auth = await getRequestContext(request);
+  if (!auth) return NextResponse.json({ error: "Authentication required." }, { status: 401 });
+  const { supabase, userId } = auth;
 
   const [profileResult, knowledgeResult, projectsResult] = await Promise.all([
     supabase.from("profiles").select("full_name,email,phone,location,professional_summary").eq("id",userId).maybeSingle(),
@@ -219,16 +218,21 @@ export async function POST(request: Request) {
     status:"draft",
     model_name:process.env.AI_GATEWAY_MODEL || "openai/gpt-4.1-mini"
   }));
-  const { error: suggestionsError } = await supabase.from("answer_suggestions").insert(suggestionRows);
-  if (suggestionsError) {
+  const { data: savedSuggestions, error: suggestionsError } = await supabase.from("answer_suggestions").insert(suggestionRows).select("id,field_id");
+  if (suggestionsError || !savedSuggestions) {
     await supabase.from("form_sessions").update({ status:"failed" }).eq("id",session.id).eq("user_id",userId);
     return NextResponse.json({ error: "Answers were generated but could not be saved for review." }, { status: 500 });
   }
 
+  const suggestionIds = new Map(savedSuggestions.map(row => [row.field_id, row.id]));
+  const answersWithIds = completeAnswers.map(answer => ({
+    ...answer,
+    suggestionId: suggestionIds.get(savedFieldMap.get(answer.fieldId) ?? "") ?? null
+  }));
   const sourceLabels = evidence.map(({id,type,label,verified}) => ({id,type,label,verified}));
   return NextResponse.json({
     sessionId:session.id,
-    answers:completeAnswers,
+    answers:answersWithIds,
     sources:sourceLabels
   }, { status:201, headers:{ "Cache-Control":"private, no-store" } });
 }

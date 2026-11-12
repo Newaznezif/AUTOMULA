@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import { createClient } from "@/lib/supabase/server";
+import { getRequestContext } from "@/lib/supabase/request";
 import { isSupabaseConfigured } from "@/lib/supabase/env";
 
 const editSchema = z.object({ answer: z.string().trim().max(20000) });
@@ -11,9 +11,9 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
   if (!z.string().uuid().safeParse(id).success) return NextResponse.json({ error: "Invalid suggestion ID." }, { status: 400 });
   const body = editSchema.safeParse(await request.json().catch(() => null));
   if (!body.success) return NextResponse.json({ error: "Answer must be valid text." }, { status: 400 });
-  const supabase = await createClient();
-  const { data: claims } = await supabase.auth.getClaims();
-  if (typeof claims?.claims?.sub !== "string") return NextResponse.json({ error: "Authentication required." }, { status: 401 });
+  const auth = await getRequestContext(request);
+  if (!auth) return NextResponse.json({ error: "Authentication required." }, { status: 401 });
+  const { supabase } = auth;
   const { data, error } = await supabase.from("answer_suggestions").update({
     answer: body.data.answer, status: "draft", needs_review: true
   }).eq("id", id).select("id").maybeSingle();
