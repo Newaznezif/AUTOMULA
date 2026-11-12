@@ -192,7 +192,7 @@ export async function POST(request: Request) {
     status:"draft",
     model_name:process.env.AI_GATEWAY_MODEL || "openai/gpt-4.1-mini"
   }));
-  const { error: suggestionsError } = await supabase.from("answer_suggestions").insert(suggestionRows);
+  const { data: savedSuggestions, error: suggestionsError } = await supabase.from("answer_suggestions").insert(suggestionRows).select("id,field_id");
   if (suggestionsError) {
     await supabase.from("form_sessions").update({ status:"failed" }).eq("id",session.id).eq("user_id",userId);
     return NextResponse.json({ error: "Answers were generated but could not be saved for review." }, { status: 500 });
