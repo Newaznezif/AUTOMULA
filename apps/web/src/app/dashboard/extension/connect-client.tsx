@@ -34,7 +34,8 @@ export function ExtensionConnectClient() {
           type: "AUTOMULA_CONNECT",
           accessToken: data.session!.access_token,
           refreshToken: data.session!.refresh_token,
-          expiresAt: data.session!.expires_at ?? Math.floor(Date.now() / 1000) + data.session!.expires_in
+          expiresAt: data.session!.expires_at ?? Math.floor(Date.now() / 1000) + data.session!.expires_in,
+          apiBase: window.location.origin
         }, response => {
           const runtimeError = bridge.runtime?.lastError;
           if (runtimeError) reject(new Error("Extension not found. Load the AUTOMULA extension in Chrome and try again."));

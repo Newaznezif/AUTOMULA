@@ -12,7 +12,9 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
   const { supabase } = auth;
   const { data: suggestion, error: readError } = await supabase.from("answer_suggestions").select("answer").eq("id",id).maybeSingle();
   if (readError || !suggestion) return NextResponse.json({ error: "Suggestion not found." }, { status: 404 });
-  if (suggestion.answer === null) return NextResponse.json({ error: "Unsupported answers cannot be approved. Add verified knowledge or edit the answer first." }, { status: 422 });
+  if (typeof suggestion.answer !== "string" || !suggestion.answer.trim()) {
+    return NextResponse.json({ error: "Empty or unsupported answers cannot be approved. Add verified knowledge or edit the answer first." }, { status: 422 });
+  }
   const { error } = await supabase.from("answer_suggestions").update({ status:"approved", needs_review:false }).eq("id",id);
   if (error) return NextResponse.json({ error: "Could not approve this answer." }, { status: 500 });
   return NextResponse.json({ ok:true });

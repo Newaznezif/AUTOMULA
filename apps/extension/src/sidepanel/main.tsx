@@ -62,6 +62,7 @@ function SidePanel() {
   const [answers, setAnswers] = React.useState<Record<string, string>>({});
   const [suggestions, setSuggestions] = React.useState<Suggestion[]>([]);
   const [sources, setSources] = React.useState<Source[]>([]);
+  const [retrievalWarnings, setRetrievalWarnings] = React.useState<string[]>([]);
   const [approved, setApproved] = React.useState<Record<string, boolean>>({});
   const [results, setResults] = React.useState<FillResult[]>([]);
   const [busy, setBusy] = React.useState(false);
@@ -96,6 +97,7 @@ function SidePanel() {
     setResults([]);
     setSuggestions([]);
     setSources([]);
+    setRetrievalWarnings([]);
     setApproved({});
     try {
       const tab = await activeTab();
@@ -146,6 +148,7 @@ function SidePanel() {
       const rows = (data.answers ?? []) as Suggestion[];
       setSuggestions(rows);
       setSources((data.sources ?? []) as Source[]);
+      setRetrievalWarnings(Array.isArray(data.retrievalWarnings) ? data.retrievalWarnings.filter((item: unknown): item is string => typeof item === "string") : []);
       setAnswers(current => Object.fromEntries(rows.map(row => [row.fieldId, row.answer ?? current[row.fieldId] ?? ""])));
       setApproved({});
       setStatus("Suggestions generated. Check sources, edit as needed, and approve each field individually.");
@@ -240,6 +243,7 @@ function SidePanel() {
         <section className="fields">
           <div className="section-head"><strong>Detected fields</strong><span>{fields.length}</span></div>
           <button className="ai-button" disabled={busy || !connected} onClick={() => void generateSuggestions()}>{busy ? "Working…" : "Generate AI suggestions"}</button>
+          {retrievalWarnings.length > 0 && <div className="retrieval-warning" role="status"><strong>Some sources were unavailable</strong>{retrievalWarnings.map((warning,index) => <p key={index}>{warning}</p>)}</div>}
           {fields.map((field, index) => {
             const suggestion = suggestions.find(item => item.fieldId === field.fieldId);
             const sourceLabels = (suggestion?.sourceIds ?? []).map(id => sourceMap.get(id)).filter((item): item is Source => Boolean(item));
@@ -255,7 +259,7 @@ function SidePanel() {
                       {field.options.map(option => <option key={option.value} value={option.value}>{option.label}</option>)}
                     </select>
                   ) : (
-                    <textarea rows={3} maxLength={field.maxLength} value={answers[field.fieldId] || ""} onChange={event => setAnswers(current => ({ ...current, [field.fieldId]: event.target.value }))} placeholder="Review or enter a response…" />
+                    <textarea rows={3} maxLength={field.maxLength} value={answers[field.fieldId] || ""} onChange={event => updateAnswer(field.fieldId, event.target.value)} placeholder="Review or enter a response…" />
                   )}
                 {suggestion && <div className="suggestion-meta">
                   <span className={`confidence ${confidenceClass[suggestion.confidence]}`}>{suggestion.confidence} confidence</span>

@@ -3,7 +3,7 @@ import { z } from "zod";
 import { getRequestContext } from "@/lib/supabase/request";
 import { isSupabaseConfigured } from "@/lib/supabase/env";
 
-const editSchema = z.object({ answer: z.string().trim().max(20000) });
+const editSchema = z.object({ answer: z.string().trim().min(1).max(20000) });
 
 export async function PATCH(request: Request, { params }: { params: Promise<{ id: string }> }) {
   if (!isSupabaseConfigured()) return NextResponse.json({ error: "Supabase is not connected." }, { status: 503 });
