@@ -10,7 +10,8 @@ const nav = [
   { href: "/dashboard/knowledge", label: "Knowledge base", icon: BookOpen },
   { href: "/dashboard/documents", label: "Documents", icon: FileText },
   { href: "/dashboard/projects", label: "Projects", icon: FolderKanban },
-  { href: "/dashboard/form-studio", label: "Form studio", icon: WandSparkles },\n  { href: "/dashboard/applications", label: "Applications", icon: BriefcaseBusiness },
+  { href: "/dashboard/form-studio", label: "Form studio", icon: WandSparkles },
+  { href: "/dashboard/applications", label: "Applications", icon: BriefcaseBusiness },
   { href: "/dashboard/settings", label: "Settings", icon: Settings }
 ];
 
