@@ -116,17 +116,26 @@ export async function POST(request: Request) {
   if (!allowed.has(file.type)) return NextResponse.json({ error: "Only PDF, DOCX, and plain text files are supported." }, { status: 415 });
   const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, "_").slice(0, 140);
   const path = `${ctx.userId}/${crypto.randomUUID()}-${safeName}`;
-  const { error: uploadError } = await ctx.supabase.storage.from(BUCKET).upload(path, file, { contentType: file.type, upsert: false });
+  const storage = ctx.supabase.storage.from(BUCKET);
+  const { error: uploadError } = await storage.upload(path, file, { contentType: file.type, upsert: false });
   if (uploadError) return NextResponse.json({ error: "Private upload failed. Check storage setup." }, { status: 500 });
+
+  // Confirm the private object is readable before committing its database metadata.
+  const { data: storedObject, error: verifyError } = await storage.download(path);
+  if (verifyError || !storedObject || storedObject.size !== file.size) {
+    await storage.remove([path]);
+    return NextResponse.json({ error: "The uploaded file could not be verified in private storage." }, { status: 500 });
+  }
+
   const { data, error } = await ctx.supabase.from("documents").insert({
     user_id: ctx.userId, filename: safeName, storage_path: path, mime_type: file.type, file_size: file.size, processing_status: "pending"
   }).select("id,filename,mime_type,file_size,processing_status,created_at").single();
   if (error) {
-    await ctx.supabase.storage.from(BUCKET).remove([path]);
+    await storage.remove([path]);
     return NextResponse.json({ error: "File uploaded but its record could not be saved." }, { status: 500 });
   }
   const processing = await processDocument(ctx.supabase,ctx.userId,data.id,file);
-  return NextResponse.json({ document:{...data,...processing} }, { status: 201, headers: { "Cache-Control": "private, no-store" } });
+  return NextResponse.json({ document:{...data,...processing,storage_verified:true} }, { status: 201, headers: { "Cache-Control": "private, no-store" } });
 }
 
 export async function DELETE(request: Request) {
