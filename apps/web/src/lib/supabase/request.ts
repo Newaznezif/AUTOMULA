@@ -14,7 +14,7 @@ export async function getRequestContext(request: Request) {
       auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false },
       global: { headers: { Authorization: `Bearer ${bearer}` } }
     });
-    const { data, error } = await supabase.auth.getUser();
+    const { data, error } = await supabase.auth.getUser(bearer);
     if (error || !data.user) return null;
     return { supabase, userId: data.user.id };
   }

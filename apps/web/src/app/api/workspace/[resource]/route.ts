@@ -19,6 +19,23 @@ const projectSchema = z.object({
   website_url: z.string().url().max(1000).optional().or(z.literal("")).nullable(),
   repository_url: z.string().url().max(1000).optional().or(z.literal("")).nullable()
 });
+const knowledgeUpdateSchema = z.object({
+  id: z.string().uuid(),
+  key: z.string().trim().min(1).max(160).optional(),
+  value: z.string().trim().min(1).max(12000).optional(),
+  category: z.enum(["personal","education","experience","skills","certification","project","achievement","preference","other"]).optional(),
+  source_reference: z.string().trim().max(1000).optional().nullable(),
+  verified: z.boolean().optional()
+}).refine(({ id, ...data }) => Object.keys(data).length > 0);
+const projectUpdateSchema = z.object({
+  id: z.string().uuid(),
+  name: z.string().trim().min(1).max(180).optional(),
+  description: z.string().trim().max(12000).optional().nullable(),
+  role: z.string().trim().max(160).optional().nullable(),
+  status: z.string().trim().max(60).optional().nullable(),
+  website_url: z.string().url().max(1000).optional().or(z.literal("")).nullable(),
+  repository_url: z.string().url().max(1000).optional().or(z.literal("")).nullable()
+}).refine(({ id, ...data }) => Object.keys(data).length > 0);
 
 async function getContext() {
   if (!isSupabaseConfigured()) return { error: "Supabase backend is not connected.", status: 503 as const };
@@ -68,4 +85,23 @@ export async function DELETE(request: NextRequest, { params }: { params: Promise
   const { error } = await context.supabase.from(table).delete().eq("id", body.data.id).eq("user_id", context.userId);
   if (error) return NextResponse.json({ error: "Could not delete this record." }, { status: 500 });
   return NextResponse.json({ ok: true });
+}
+
+
+export async function PATCH(request: NextRequest, { params }: { params: Promise<{ resource: string }> }) {
+  const { resource: raw } = await params;
+  const parsedResource = resourceSchema.safeParse(raw);
+  if (!parsedResource.success) return NextResponse.json({ error: "Unknown resource." }, { status: 404 });
+  const context = await getContext();
+  if ("error" in context) return NextResponse.json({ error: context.error }, { status: context.status });
+  const rawBody = await request.json().catch(() => null);
+  const parsed = parsedResource.data === "knowledge"
+    ? knowledgeUpdateSchema.safeParse(rawBody)
+    : projectUpdateSchema.safeParse(rawBody);
+  if (!parsed.success) return NextResponse.json({ error: "Check the fields and try again.", details: parsed.error.flatten() }, { status: 400 });
+  const { id, ...changes } = parsed.data;
+  const table = parsedResource.data === "knowledge" ? "knowledge_items" : "projects";
+  const { data, error } = await context.supabase.from(table).update(changes).eq("id", id).eq("user_id", context.userId).select("id").maybeSingle();
+  if (error || !data) return NextResponse.json({ error: "Record not found or could not be updated." }, { status: 404 });
+  return NextResponse.json({ ok: true }, { headers: { "Cache-Control": "private, no-store" } });
 }
