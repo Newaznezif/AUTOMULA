@@ -2,9 +2,9 @@ name: AUTOMULA CI
 
 on:
   push:
-    branches: [main, phase-1-foundation, phase-2-core-workflows, phase-3-product-polish, phase-4-workspace-reliability, phase-5-e2e-functionality, phase-6-production-hardening]
+    branches: [main, phase-1-foundation, phase-2-core-workflows, phase-3-product-polish, phase-4-workspace-reliability, phase-5-e2e-functionality, phase-6-production-hardening, phase-7-extension-integration]
   pull_request:
-    branches: [main, phase-4-workspace-reliability]
+    branches: [main, phase-4-workspace-reliability, phase-6-production-hardening]
 
 permissions:
   contents: read
