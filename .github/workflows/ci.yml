@@ -1,0 +1,42 @@
+name: AUTOMULA CI
+
+on:
+  push:
+    branches: [main, phase-1-foundation]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10.8.0
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Install dependencies
+        run: pnpm install --no-frozen-lockfile
+
+      - name: Typecheck web
+        run: pnpm --filter @automula/web typecheck
+
+      - name: Build web
+        run: pnpm --filter @automula/web build
+
+      - name: Typecheck extension
+        run: pnpm --filter @automula/extension typecheck
+
+      - name: Build extension
+        run: pnpm --filter @automula/extension build

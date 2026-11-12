@@ -1,0 +1,5 @@
+import { ResourceManager } from "@/components/resource-manager";
+
+export default function KnowledgePage() {
+  return <div><p className="text-xs font-semibold uppercase tracking-[.18em] text-blue-300">Knowledge base</p><h1 className="mt-2 text-3xl font-semibold tracking-tight">Your verified facts</h1><p className="mt-2 max-w-2xl text-sm leading-6 text-slate-400">Store reusable information about your background. AUTOMULA uses these records as evidence when preparing application answers.</p><div className="mt-8"><ResourceManager resource="knowledge" title="Knowledge records" fields={[{name:"key",label:"Fact title",placeholder:"e.g. Bachelor of Information Systems",required:true},{name:"value",label:"Details",placeholder:"Write the accurate information…",type:"textarea",required:true},{name:"category",label:"Category",type:"select",options:["personal","education","experience","skills","certification","project","achievement","preference","other"]},{name:"source_reference",label:"Source or reference (optional)",placeholder:"CV, certificate, official URL…"},{name:"verified",label:"I have checked this fact against its source",type:"checkbox"}]}/></div></div>;
+}
