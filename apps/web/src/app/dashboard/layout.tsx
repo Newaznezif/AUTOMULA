@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { Activity, BriefcaseBusiness, FileText, FolderKanban, LayoutDashboard, Settings, UserRound, BookOpen, Sparkles } from "lucide-react";
+import { Activity, BriefcaseBusiness, FileText, FolderKanban, LayoutDashboard, Settings, UserRound, BookOpen, Sparkles, WandSparkles } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { isSupabaseConfigured } from "@/lib/supabase/env";
 
@@ -10,7 +10,7 @@ const nav = [
   { href: "/dashboard/knowledge", label: "Knowledge base", icon: BookOpen },
   { href: "/dashboard/documents", label: "Documents", icon: FileText },
   { href: "/dashboard/projects", label: "Projects", icon: FolderKanban },
-  { href: "/dashboard/applications", label: "Applications", icon: BriefcaseBusiness },
+  { href: "/dashboard/form-studio", label: "Form studio", icon: WandSparkles },\n  { href: "/dashboard/applications", label: "Applications", icon: BriefcaseBusiness },
   { href: "/dashboard/settings", label: "Settings", icon: Settings }
 ];
 
