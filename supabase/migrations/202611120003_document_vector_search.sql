@@ -40,4 +40,4 @@ as $$
   limit greatest(1, least(match_count, 20));
 $$;
 
-grant execute on function public.match_document_chunks(extensions.vector, integer) to authenticated;
+revoke all on function public.match_document_chunks(extensions.vector, integer) from public, anon;\ngrant execute on function public.match_document_chunks(extensions.vector, integer) to authenticated;
