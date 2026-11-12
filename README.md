@@ -67,13 +67,18 @@ Create the web environment file:
 Copy-Item .env.example apps/web/.env.local
 ```
 
-Set these values in `apps/web/.env.local` after the dedicated Supabase project is created:
+Set these values in `apps/web/.env.local` (Vercel already has the Supabase URL, publishable key, canonical app URL, and model names configured):
 
 - `NEXT_PUBLIC_SUPABASE_URL`
 - `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`
-- `AI_GATEWAY_API_KEY` (for local AI requests)
+- For local development, run `vercel link` and `vercel env pull apps/web/.env.local` to obtain the Vercel OIDC token for AI Gateway. Alternatively, set `AI_GATEWAY_API_KEY` locally.
 
-Never commit `.env.local`, service-role keys, or provider secrets.
+Never commit `.env.local`, service-role keys, OIDC tokens, or provider secrets. Vercel production and preview deployments use Vercel-managed OIDC authentication for AI Gateway.
+
+In Supabase Dashboard → Authentication → URL Configuration, set Site URL to `https://automula.vercel.app` and add these Redirect URLs:
+
+- `https://automula.vercel.app/auth/callback`
+- `http://localhost:3000/auth/callback`
 
 Apply every SQL migration in `supabase/migrations` to the dedicated AUTOMULA database in filename order. Confirm the private `private-documents` bucket and RLS policies exist before uploading real documents.
 
