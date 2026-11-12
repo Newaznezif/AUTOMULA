@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { generateText, Output } from "ai";
+import { generateText, Output, embedMany } from "ai";
 import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
 import { isSupabaseConfigured } from "@/lib/supabase/env";
@@ -83,6 +83,33 @@ export async function POST(request: Request) {
       project.repository_url ? `Repository: ${project.repository_url}` : ""
     ].filter(Boolean).join("\n");
     evidence.push({ id:project.id, type:"project", label:project.name, content:details, verified:false });
+  }
+
+  // Retrieve semantically relevant chunks from this user's private document library.
+  const readyDocuments = await supabase.from("documents").select("id,filename").eq("user_id",userId).eq("processing_status","ready").limit(100);
+  if (readyDocuments.data?.length) {
+    try {
+      const { embeddings } = await embedMany({
+        model: process.env.AI_GATEWAY_EMBEDDING_MODEL || "openai/text-embedding-3-small",
+        values: parsed.data.fields.map(field => field.question),
+        maxParallelCalls: 2,
+        maxRetries: 1
+      });
+      const matches = await Promise.all(embeddings.map(query_embedding =>
+        supabase.rpc("match_document_chunks",{query_embedding,match_count:4})
+      ));
+      const docNames = new Map((readyDocuments.data ?? []).map(doc=>[doc.id,doc.filename]));
+      for (const match of matches) {
+        for (const chunk of match.data ?? []) {
+          const label = docNames.get(chunk.document_id);
+          if (label && !evidence.some(item=>item.id===chunk.id)) {
+            evidence.push({ id:chunk.id, type:"document", label, content:String(chunk.content).slice(0,5000), verified:false });
+          }
+        }
+      }
+    } catch {
+      // Document retrieval is additive; profile and structured knowledge can still be used.
+    }
   }
 
   if (evidence.length === 0) return NextResponse.json({ error: "Your knowledge base is empty. Add profile details, verified knowledge, or projects before generating answers." }, { status: 422 });
