@@ -2,6 +2,11 @@ import Link from "next/link";
 import { AuthForm } from "./auth-form";
 import { isSupabaseConfigured } from "@/lib/supabase/env";
 
+const authErrors: Record<string, string> = {
+  backend_not_configured: "AUTOMULA's authentication service is not configured. Please contact support.",
+  confirmation_link_invalid: "This email link is expired, already used, or invalid. Sign in if your email is confirmed, or request a password reset.",
+};
+
 export default async function LoginPage({
   searchParams
 }: {
@@ -24,10 +29,10 @@ export default async function LoginPage({
           {!configured ? (
             <div className="mt-6 rounded-2xl border border-amber-300/20 bg-amber-300/5 p-4 text-sm leading-6 text-amber-100">
               <strong>Backend connection required.</strong>
-              <p className="mt-1 text-amber-100/75">Connect a dedicated Supabase project by setting NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY in the Vercel project environment.</p>
+              <p className="mt-1 text-amber-100/75">Connect the dedicated Supabase project by setting NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY in the Vercel project environment.</p>
             </div>
           ) : <AuthForm initialMode={params.mode === "signup" ? "signup" : "login"} />}
-          {params.error && <p className="mt-4 text-sm text-rose-300">{params.error}</p>}
+          {params.error && <p role="alert" className="mt-4 text-sm text-rose-300">{authErrors[params.error] ?? "Authentication could not be completed. Please try again."}</p>}
         </section>
         <p className="mt-6 text-center text-xs text-slate-500"><Link href="/" className="hover:text-white">Back to AUTOMULA</Link></p>
       </div>
