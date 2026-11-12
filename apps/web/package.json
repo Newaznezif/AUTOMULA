@@ -1,7 +1,8 @@
 {
   "name": "@automula/web",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "private": true,
+  "engines": { "node": ">=22" },
   "scripts": {
     "dev": "next dev",
     "build": "next build",
@@ -13,7 +14,6 @@
     "@supabase/ssr": "^0.6.1",
     "@supabase/supabase-js": "^2.49.4",
     "ai": "^6.0.0",
-    "@ai-sdk/openai": "^3.0.0",
     "lucide-react": "^0.468.0",
     "next": "^15.3.2",
     "react": "^19.0.0",
