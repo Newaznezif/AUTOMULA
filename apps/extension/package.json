@@ -1,0 +1,14 @@
+{
+  "name": "@automula/extension",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "build": "vite build",
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@types/chrome": "^0.0.315",
+    "typescript": "^5.8.3",
+    "vite": "^6.3.2"
+  }
+}
