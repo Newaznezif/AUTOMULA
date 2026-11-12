@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Plus, Trash2, LoaderCircle, CheckCircle2 } from "lucide-react";
 
 type Field = { name: string; label: string; placeholder?: string; type?: "text" | "textarea" | "select" | "checkbox"; options?: string[]; required?: boolean };
@@ -14,7 +14,7 @@ export function ResourceManager({ resource, title, fields }: { resource: Resourc
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
 
-  async function refresh() {
+  const refresh = useCallback(async () => {
     setLoading(true);
     try {
       const response = await fetch(`/api/workspace/${resource}`);
@@ -23,9 +23,9 @@ export function ResourceManager({ resource, title, fields }: { resource: Resourc
       setRecords(payload.records ?? []);
     } catch (e) { setError(e instanceof Error ? e.message : "Could not load records."); }
     finally { setLoading(false); }
-  }
+  }, [resource]);
 
-  useEffect(() => { void refresh(); }, [resource]);
+  useEffect(() => { void refresh(); }, [refresh]);
 
   async function createRecord(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
