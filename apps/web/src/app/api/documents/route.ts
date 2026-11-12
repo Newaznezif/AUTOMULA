@@ -52,7 +52,7 @@ async function extractText(file: File, bytes: Uint8Array) {
     return result.value;
   }
   if (file.type === "application/pdf") {
-    const pdf = await getDocument({ data: bytes, useSystemFonts: true, disableFontFace: true, isEvalSupported: false }).promise;
+    const pdf = await getDocument({ data: bytes, useSystemFonts: true, disableFontFace: true }).promise;
     const pages: string[] = [];
     for (let pageNumber = 1; pageNumber <= pdf.numPages; pageNumber++) {
       const page = await pdf.getPage(pageNumber);
