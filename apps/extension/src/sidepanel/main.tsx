@@ -29,9 +29,24 @@ async function refreshSession(session: StoredSession): Promise<StoredSession> {
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ refreshToken: session.refreshToken })
   });
-  const data = await response.json();
+  const data: Partial<StoredSession> & { error?: string } = await response.json();
   if (!response.ok) throw new Error(data.error || "Your AUTOMULA session expired. Reconnect from the dashboard.");
-  const next = data as StoredSession;
+  if (
+    typeof data.accessToken !== "string" || data.accessToken.length < 20 ||
+    typeof data.refreshToken !== "string" || data.refreshToken.length < 20 ||
+    typeof data.expiresAt !== "number" || !Number.isFinite(data.expiresAt)
+  ) {
+    throw new Error("The server returned an invalid refreshed session. Reconnect from the dashboard.");
+  }
+
+  // Keep the exact dashboard origin that paired this extension. Without this,
+  // a refresh on a preview/staging deployment silently falls back to production.
+  const next: StoredSession = {
+    accessToken: data.accessToken,
+    refreshToken: data.refreshToken,
+    expiresAt: data.expiresAt,
+    apiBase
+  };
   await chrome.storage.session.set({ automulaSession: next });
   return next;
 }
