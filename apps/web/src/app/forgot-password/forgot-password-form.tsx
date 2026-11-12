@@ -30,12 +30,12 @@ export function ForgotPasswordForm() {
   }
 
   return (
-    <form onSubmit={submit} className="mt-7 space-y-4">
-      <label className="block text-sm text-slate-300">Email address
-        <input type="email" required autoComplete="email" value={email} onChange={event => setEmail(event.target.value)} className="mt-2 w-full rounded-xl border border-white/10 bg-slate-950/70 px-4 py-3 text-sm outline-none focus:border-blue-400" placeholder="you@example.com" />
+    <form onSubmit={submit} className="auth-form">
+      <label className="auth-field">Email address
+        <input type="email" required autoComplete="email" value={email} onChange={event => setEmail(event.target.value)} className="auth-input" placeholder="you@example.com" />
       </label>
-      <button disabled={busy} className="w-full rounded-xl bg-blue-500 px-4 py-3 text-sm font-semibold text-white hover:bg-blue-400 disabled:opacity-50">{busy ? "Sending…" : "Send reset link"}</button>
-      {message && <p role="status" aria-live="polite" className={`text-sm leading-6 ${failed ? "text-rose-300" : "text-emerald-300"}`}>{message}</p>}
+      <button disabled={busy} className="auth-submit">{busy ? "Sending…" : "Send reset link"}</button>
+      {message && <p role="status" aria-live="polite" className={`auth-message ${failed ? "is-error" : "is-success"}`}>{message}</p>}
     </form>
   );
 }
