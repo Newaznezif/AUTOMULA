@@ -1,0 +1,18 @@
+{
+  "manifest_version": 3,
+  "name": "AUTOMULA — FormPilot AI",
+  "version": "0.1.0",
+  "description": "Understand forms, prepare grounded answers, and fill approved fields.",
+  "permissions": ["activeTab", "scripting", "storage", "sidePanel"],
+  "optional_host_permissions": ["https://*/*", "http://*/*"],
+  "background": {
+    "service_worker": "background.js",
+    "type": "module"
+  },
+  "action": {
+    "default_title": "Open AUTOMULA"
+  },
+  "side_panel": {
+    "default_path": "sidepanel.html"
+  }
+}
