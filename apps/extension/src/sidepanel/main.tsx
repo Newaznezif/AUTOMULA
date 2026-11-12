@@ -39,19 +39,23 @@ async function refreshSession(session: StoredSession): Promise<StoredSession> {
 async function apiRequest(path: string, init: RequestInit = {}) {
   let session = await readSession();
   if (!session) throw new Error("Connect this extension to your AUTOMULA account first.");
-  if (session.expiresAt <= Math.floor(Date.now() / 1000) + 60) session = await refreshSession(session);
+  let apiBase = session.apiBase || "https://automula.vercel.app";
+  if (session.expiresAt <= Math.floor(Date.now() / 1000) + 60) {
+    session = await refreshSession(session);
+    apiBase = session.apiBase || apiBase;
+  }
 
   const send = (token: string) => {
     const headers = new Headers(init.headers);
     headers.set("Authorization", `Bearer ${token}`);
     if (init.body && !(init.body instanceof FormData)) headers.set("Content-Type", "application/json");
-    const apiBase = session.apiBase || "https://automula.vercel.app";
     return fetch(`${apiBase}${path}`, { ...init, headers });
   };
 
   let response = await send(session.accessToken);
   if (response.status === 401) {
     session = await refreshSession(session);
+    apiBase = session.apiBase || apiBase;
     response = await send(session.accessToken);
   }
   return response;
