@@ -3,6 +3,8 @@ import { test, expect } from "@playwright/test";
 const baseUrl = process.env.E2E_BASE_URL;
 const email = process.env.E2E_EMAIL;
 const password = process.env.E2E_PASSWORD;
+const secondEmail = process.env.E2E_SECOND_EMAIL;
+const secondPassword = process.env.E2E_SECOND_PASSWORD;
 const authenticatedE2E = Boolean(baseUrl && email && password);
 
 test.describe("AUTOMULA authenticated product workflows", () => {
@@ -60,6 +62,31 @@ test.describe("AUTOMULA authenticated product workflows", () => {
     expect(afterDeleteBody.records.some((item: { id: string }) => item.id === recordId)).toBeFalsy();
   });
 
+  test("a second account cannot read or modify the first account knowledge", async ({ page, browser }) => {
+    test.skip(!secondEmail || !secondPassword, "Set E2E_SECOND_EMAIL and E2E_SECOND_PASSWORD for cross-account isolation testing.");
+    const marker = "AUTOMULA-ISOLATION-" + Date.now();
+    const created = await page.request.post("/api/workspace/knowledge", { data: { key: marker, value: "Private value " + marker, category: "other" } });
+    expect(created.status()).toBe(201);
+    const recordId = (await created.json()).record.id;
+    const secondContext = await browser.newContext();
+    try {
+      const secondPage = await secondContext.newPage();
+      await secondPage.goto("/login");
+      await secondPage.getByLabel("Email address").fill(secondEmail!);
+      await secondPage.getByLabel("Password").fill(secondPassword!);
+      await secondPage.getByRole("button", { name: "Sign in" }).click();
+      await expect(secondPage).toHaveURL(/\\/dashboard(?:$|\\/)/);
+      const records = await secondPage.request.get("/api/workspace/knowledge");
+      expect(records.ok()).toBeTruthy();
+      const body = await records.json();
+      expect(body.records.some((item: { id: string }) => item.id === recordId)).toBeFalsy();
+      const update = await secondPage.request.patch("/api/workspace/knowledge", { data: { id: recordId, value: "unauthorized overwrite" } });
+      expect(update.status()).toBe(404);
+    } finally {
+      await secondContext.close();
+      await page.request.delete("/api/workspace/knowledge", { data: { id: recordId } });
+    }
+  });
   test("document upload persists metadata and private storage object", async ({ page }) => {
     const marker = `AUTOMULA-DOCUMENT-E2E-${Date.now()}`;
     let documentId = "";
@@ -122,6 +149,13 @@ test.describe("AUTOMULA authenticated product workflows", () => {
             required: true,
             options: [],
             hasExistingValue: false
+          }, {
+            fieldId: "e2e-existing-value",
+            question: "What is the existing answer?",
+            fieldType: "text",
+            required: false,
+            options: [],
+            hasExistingValue: true
           }]
         }
       });
@@ -132,6 +166,9 @@ test.describe("AUTOMULA authenticated product workflows", () => {
       expect(answer.sourceIds).toContain(recordId);
       expect(answer.answer).toContain(marker);
       expect(result.sources.some((source: { id: string }) => source.id === recordId)).toBeTruthy();
+      const existingAnswer = result.answers.find((item: { fieldId: string }) => item.fieldId === "e2e-existing-value");
+      expect(existingAnswer?.answer).toBeNull();
+      expect(existingAnswer?.confidence).toBe("unsupported");
     } finally {
       if (recordId) await page.request.delete("/api/workspace/knowledge", { data: { id: recordId } });
     }
@@ -159,5 +196,25 @@ test.describe("AUTOMULA authenticated product workflows", () => {
     await page.goto("/dashboard/extension");
     await page.getByRole("button", { name: "Connect Chrome extension" }).click();
     await expect(page.getByRole("status")).toContainText("AUTOMULA is connected");
+  });
+});
+
+test.describe("AUTOMULA authentication boundaries", () => {
+  test("invalid credentials are rejected without opening the workspace", async ({ page }) => {
+    test.skip(!email, "Set E2E_EMAIL to run authentication boundary checks.");
+    await page.goto("/login");
+    await page.getByLabel("Email address").fill(email!);
+    await page.getByLabel("Password").fill("Definitely-not-the-real-password-2026!");
+    await page.getByRole("button", { name: "Sign in" }).click();
+    await expect(page.getByRole("alert")).toContainText(/email or password is incorrect/i);
+    await expect(page).toHaveURL(/\\/login/);
+  });
+
+  test("password recovery request returns a privacy-preserving confirmation", async ({ page }) => {
+    test.skip(process.env.E2E_RUN_AUTH_RECOVERY !== "1" || !email, "Set E2E_RUN_AUTH_RECOVERY=1 and E2E_EMAIL to send a recovery email to the dedicated test account.");
+    await page.goto("/forgot-password");
+    await page.getByLabel("Email address").fill(email!);
+    await page.getByRole("button", { name: "Send reset link" }).click();
+    await expect(page.getByRole("status")).toContainText("If this account can receive email");
   });
 });
