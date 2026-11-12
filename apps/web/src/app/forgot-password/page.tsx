@@ -13,7 +13,7 @@ export default function ForgotPasswordPage() {
         <section className="rounded-3xl border border-white/10 bg-slate-900/70 p-7 shadow-2xl shadow-blue-950/20">
           <p className="text-xs font-semibold uppercase tracking-[.18em] text-blue-300">Account recovery</p>
           <h1 className="mt-3 text-2xl font-semibold tracking-tight">Reset your password</h1>
-          <p className="mt-2 text-sm leading-6 text-slate-400">Enter the email address on your AUTOMULA account. We'll send a one-time password reset link if the account can receive email.</p>
+          <p className="mt-2 text-sm leading-6 text-slate-400">Enter the email address on your AUTOMULA account. We&apos;ll send a one-time password reset link if the account can receive email.</p>
           {isSupabaseConfigured()
             ? <ForgotPasswordForm />
             : <p className="mt-6 text-sm text-rose-300">Authentication is not configured.</p>}
