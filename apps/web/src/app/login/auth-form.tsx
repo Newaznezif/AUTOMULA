@@ -19,7 +19,7 @@ export function AuthForm({ initialMode }: { initialMode: "login" | "signup" }) {
     try {
       const supabase = createClient();
       if (mode === "signup") {
-        const { data, error } = await supabase.auth.signUp({ email, password });
+        const { data, error } = await supabase.auth.signUp({ email, password, options: { emailRedirectTo: `${window.location.origin}/auth/callback` } });
         if (error) throw error;
         setMessage(data.session ? "Account created. Opening your workspace…" : "Account created. Check your email to confirm your address.");
         if (data.session) router.push("/dashboard");
