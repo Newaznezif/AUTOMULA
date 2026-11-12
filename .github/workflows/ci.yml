@@ -38,8 +38,7 @@ jobs:
       - name: Typecheck extension
         run: pnpm --filter @automula/extension typecheck
 
-      - name: Build extension
-        run: pnpm --filter @automula/extension build
+      - name: Validate Chrome extension manifests\n        run: pnpm --filter @automula/extension check:manifest\n\n      - name: Build extension\n        run: pnpm --filter @automula/extension build
 
       - name: Install Chromium for end-to-end tests
         if: ${{ vars.E2E_BASE_URL != '' }}
@@ -51,5 +50,5 @@ jobs:
           E2E_BASE_URL: ${{ vars.E2E_BASE_URL }}
           E2E_EMAIL: ${{ secrets.E2E_EMAIL }}
           E2E_PASSWORD: ${{ secrets.E2E_PASSWORD }}
-          E2E_RUN_AI: ${{ vars.E2E_RUN_AI }}
+          E2E_RUN_AI: ${{ vars.E2E_RUN_AI }}\n          E2E_RUN_AUTH_RECOVERY: ${{ vars.E2E_RUN_AUTH_RECOVERY }}\n          E2E_SECOND_EMAIL: ${{ secrets.E2E_SECOND_EMAIL }}\n          E2E_SECOND_PASSWORD: ${{ secrets.E2E_SECOND_PASSWORD }}
         run: pnpm --filter @automula/web test:e2e
