@@ -27,11 +27,11 @@ AUTOMULA is a personal information workspace and browser form assistant. It stor
 - Field change events and post-fill value verification.
 - No automatic submission.
 
-## Important integration status
+## Integration status
 
-The repository is build-validated in GitHub Actions. The web and extension builds pass on the latest checked CI run.
+The web and extension projects are validated through GitHub Actions. The live account and AI workflows require the dedicated AUTOMULA Supabase project and its environment configuration. AI generation requires Vercel AI Gateway authentication.
 
-The live account and AI workflows require a dedicated Supabase project and its configuration. Do not reuse another application's database. AI generation requires Vercel AI Gateway authentication. The Chrome extension can pair with the signed-in dashboard, send detected form fields to the authenticated AI answer service, display source-backed suggestions, and fill only answers the user explicitly approves. Pairing tokens are kept in Chrome session storage.
+The Chrome extension pairs with the signed-in dashboard, requests evidence-grounded answer suggestions, displays source-backed drafts, and fills only answers the user explicitly approves. Pairing tokens are kept in Chrome session storage.
 
 AUTOMULA does not claim universal support for every website. Custom JavaScript widgets, cross-origin frames, CAPTCHA, MFA, and website-specific controls can require manual interaction.
 
@@ -47,10 +47,10 @@ AUTOMULA does not claim universal support for every website. Custom JavaScript w
 
 Requirements: Git, Node.js 22, pnpm 10, and Chrome.
 
-Clone the implementation branch:
+Clone the repository:
 
 ```powershell
-git clone --branch phase-2-core-workflows https://github.com/NewazNezif/AUTOMULA.git "C:\Users\It's Blue\AUTOMULA"
+git clone https://github.com/NewazNezif/AUTOMULA.git "C:\Users\It's Blue\AUTOMULA"
 Set-Location "C:\Users\It's Blue\AUTOMULA"
 ```
 
@@ -120,7 +120,8 @@ pnpm --filter @automula/extension build
 - Existing form values are preserved.
 - AUTOMULA never submits forms, bypasses CAPTCHA/MFA, or stores passwords, payment-card details, or MFA codes as reusable knowledge.
 
-## Development branch
+## Development
 
-Active implementation branch: `phase-2-core-workflows`  
-Main branch: preserved; not replaced by this implementation.
+- `main` contains the merged Phase 2 workflows and workspace redesign.
+- `phase-3-product-polish` contains the current public-site and authentication experience improvements.
+- Changes are reviewed through pull requests before release.

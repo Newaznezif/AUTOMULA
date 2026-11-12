@@ -63,17 +63,17 @@ export function AuthForm({ initialMode }: { initialMode: "login" | "signup" }) {
   }
 
   return (
-    <form onSubmit={submit} className="mt-7 space-y-4">
-      <label className="block text-sm text-slate-300">Email address
-        <input type="email" required autoComplete="email" value={email} onChange={e => setEmail(e.target.value)} className="mt-2 w-full rounded-xl border border-white/10 bg-slate-950/70 px-4 py-3 text-sm outline-none focus:border-blue-400" placeholder="you@example.com" />
+    <form onSubmit={submit} className="auth-form">
+      <label className="auth-field">Email address
+        <input type="email" required autoComplete="email" value={email} onChange={e => setEmail(e.target.value)} className="auth-input" placeholder="you@example.com" />
       </label>
-      <label className="block text-sm text-slate-300">Password
-        <input type="password" required minLength={8} autoComplete={mode === "signup" ? "new-password" : "current-password"} value={password} onChange={e => setPassword(e.target.value)} className="mt-2 w-full rounded-xl border border-white/10 bg-slate-950/70 px-4 py-3 text-sm outline-none focus:border-blue-400" placeholder="At least 8 characters" />
+      <label className="auth-field">Password
+        <input type="password" required minLength={8} autoComplete={mode === "signup" ? "new-password" : "current-password"} value={password} onChange={e => setPassword(e.target.value)} className="auth-input" placeholder="At least 8 characters" />
       </label>
-      {mode === "login" && <div className="-mt-1 text-right"><Link href="/forgot-password" className="text-xs font-medium text-blue-300 hover:text-blue-200">Forgot password?</Link></div>}
-      <button disabled={busy} className="w-full rounded-xl bg-blue-500 px-4 py-3 text-sm font-semibold text-white hover:bg-blue-400 disabled:opacity-50">{busy ? "Please wait…" : mode === "signup" ? "Create account" : "Sign in"}</button>
-      {message && <p role="status" aria-live="polite" className={`text-sm leading-6 ${messageKind === "success" ? "text-emerald-300" : "text-rose-300"}`}>{message}</p>}
-      <p className="text-center text-sm text-slate-500">{mode === "signup" ? "Already registered?" : "New to AUTOMULA?"} <button type="button" onClick={() => { setMode(mode === "signup" ? "login" : "signup"); setMessage(""); }} className="font-medium text-blue-300 hover:text-blue-200">{mode === "signup" ? "Sign in" : "Create an account"}</button></p>
+      {mode === "login" && <div className="auth-forgot"><Link href="/forgot-password">Forgot password?</Link></div>}
+      <button disabled={busy} className="auth-submit">{busy ? "Please wait…" : mode === "signup" ? "Create account" : "Sign in"}</button>
+      {message && <p role={messageKind === "error" ? "alert" : "status"} aria-live="polite" className={`auth-message ${messageKind === "success" ? "is-success" : "is-error"}`}>{message}</p>}
+      <p className="auth-mode-switch">{mode === "signup" ? "Already registered?" : "New to AUTOMULA?"} <button type="button" onClick={() => { setMode(mode === "signup" ? "login" : "signup"); setMessage(""); }} className="auth-mode-button">{mode === "signup" ? "Sign in" : "Create an account"}</button></p>
     </form>
   );
 }
