@@ -1,3 +1,5 @@
+@import "tailwindcss";
+
 
 
 /* Workspace application shell */
@@ -58,3 +60,19 @@ button,a{-webkit-tap-highlight-color:transparent}
 @media(max-width:1000px){.app-shell{grid-template-columns:210px minmax(0,1fr)}.app-content{padding:27px 23px}.app-topbar{padding-right:23px;padding-left:23px}}
 @media(max-width:720px){.app-shell{grid-template-columns:1fr}.app-sidebar{position:sticky;z-index:30;top:0;height:auto;border-right:0;border-bottom:1px solid #e6eaf0;padding:9px 13px 0}.app-brand{padding:0 4px 9px}.app-brand-mark{width:30px;height:30px}.dashboard-nav{display:flex;gap:5px;overflow-x:auto;padding:0 0 9px;scrollbar-width:thin}.dashboard-nav-group{display:flex;flex-shrink:0;gap:3px}.dashboard-nav-label{display:none}.dashboard-nav-link{min-height:34px;gap:7px;padding:0 9px;font-size:10px;white-space:nowrap}.dashboard-nav-link svg{width:14px;height:14px}.app-sidebar-footer{display:none}.app-topbar{min-height:52px;padding:8px 17px}.preview-banner{padding:9px 17px}.app-content{padding:22px 16px}.page-header{align-items:flex-start;flex-direction:column;gap:14px}.page-title{font-size:24px}.page-description{font-size:10px}}
 @media(prefers-reduced-motion:reduce){.skeleton-line{animation:none}}
+
+
+/* Transitional palette mapping for components still using the original dark utility classes. */
+.bg-slate-900\/40,.bg-slate-900\/50,.bg-slate-900\/70,.bg-slate-950\/40,.bg-slate-950\/70{background-color:#fff!important}
+.border-white\/10,.border-white\/5{border-color:#e5e9ef!important}
+.divide-white\/5>*+*{border-color:#edf0f4!important}
+.text-white{color:#263447!important}
+.text-slate-300{color:#4b5a6e!important}
+.text-slate-400{color:#69788c!important}
+.text-slate-500{color:#8491a2!important}
+.text-slate-600{color:#96a1ae!important}
+.text-blue-300,.text-blue-200{color:#315fba!important}
+.text-emerald-300{color:#28764c!important}
+.text-rose-300{color:#b42318!important}
+.bg-blue-400\/10,.bg-blue-500\/10{background-color:#edf3fc!important}
+.bg-white\/5,.bg-white\/10{background-color:#f4f6f9!important}
