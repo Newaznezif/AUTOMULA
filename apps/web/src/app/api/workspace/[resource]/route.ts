@@ -8,7 +8,8 @@ const knowledgeSchema = z.object({
   key: z.string().trim().min(1).max(160),
   value: z.string().trim().min(1).max(12000),
   category: z.enum(["personal","education","experience","skills","certification","project","achievement","preference","other"]).default("other"),
-  source_reference: z.string().trim().max(1000).optional().nullable(),\n  verified: z.boolean().default(false)
+  source_reference: z.string().trim().max(1000).optional().nullable(),
+  verified: z.boolean().default(false)
 });
 const projectSchema = z.object({
   name: z.string().trim().min(1).max(180),
