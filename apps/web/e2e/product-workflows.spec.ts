@@ -6,6 +6,7 @@ const password = process.env.E2E_PASSWORD;
 const secondEmail = process.env.E2E_SECOND_EMAIL;
 const secondPassword = process.env.E2E_SECOND_PASSWORD;
 const authenticatedE2E = Boolean(baseUrl && email && password);
+const authE2E = Boolean(baseUrl && email);
 
 test.describe("AUTOMULA authenticated product workflows", () => {
   test.skip(!authenticatedE2E, "Set E2E_BASE_URL, E2E_EMAIL and E2E_PASSWORD to run against a dedicated E2E account.");
@@ -75,7 +76,7 @@ test.describe("AUTOMULA authenticated product workflows", () => {
       await secondPage.getByLabel("Email address").fill(secondEmail!);
       await secondPage.getByLabel("Password").fill(secondPassword!);
       await secondPage.getByRole("button", { name: "Sign in" }).click();
-      await expect(secondPage).toHaveURL(/\\/dashboard(?:$|\\/)/);
+      await expect(secondPage).toHaveURL(/\/dashboard(?:$|\/)/);
       const records = await secondPage.request.get("/api/workspace/knowledge");
       expect(records.ok()).toBeTruthy();
       const body = await records.json();
@@ -201,17 +202,17 @@ test.describe("AUTOMULA authenticated product workflows", () => {
 
 test.describe("AUTOMULA authentication boundaries", () => {
   test("invalid credentials are rejected without opening the workspace", async ({ page }) => {
-    test.skip(!email, "Set E2E_EMAIL to run authentication boundary checks.");
+    test.skip(!authE2E, "Set E2E_BASE_URL and E2E_EMAIL to run authentication boundary checks.");
     await page.goto("/login");
     await page.getByLabel("Email address").fill(email!);
     await page.getByLabel("Password").fill("Definitely-not-the-real-password-2026!");
     await page.getByRole("button", { name: "Sign in" }).click();
     await expect(page.getByRole("alert")).toContainText(/email or password is incorrect/i);
-    await expect(page).toHaveURL(/\\/login/);
+    await expect(page).toHaveURL(/\/login/);
   });
 
   test("password recovery request returns a privacy-preserving confirmation", async ({ page }) => {
-    test.skip(process.env.E2E_RUN_AUTH_RECOVERY !== "1" || !email, "Set E2E_RUN_AUTH_RECOVERY=1 and E2E_EMAIL to send a recovery email to the dedicated test account.");
+    test.skip(process.env.E2E_RUN_AUTH_RECOVERY !== "1" || !authE2E, "Set E2E_RUN_AUTH_RECOVERY=1 and E2E_EMAIL to send a recovery email to the dedicated test account.");
     await page.goto("/forgot-password");
     await page.getByLabel("Email address").fill(email!);
     await page.getByRole("button", { name: "Send reset link" }).click();
