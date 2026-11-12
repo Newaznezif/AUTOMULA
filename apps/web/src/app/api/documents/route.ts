@@ -1,11 +1,16 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
+import { embedMany } from "ai";
+import { getDocument } from "pdfjs-dist/legacy/build/pdf.mjs";
+import mammoth from "mammoth";
 import { createClient } from "@/lib/supabase/server";
 import { isSupabaseConfigured } from "@/lib/supabase/env";
 
 export const runtime = "nodejs";
+export const maxDuration = 60;
 const BUCKET = "private-documents";
 const MAX_BYTES = 10 * 1024 * 1024;
+const MAX_TEXT_CHARS = 240_000;
 const allowed = new Set([
   "application/pdf",
   "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
@@ -19,6 +24,77 @@ async function context() {
   const userId = data?.claims?.sub;
   if (typeof userId !== "string") return { error: "Authentication required.", status: 401 as const };
   return { supabase, userId };
+}
+
+function chunkText(input: string, size = 1400, overlap = 180) {
+  const text = input.replace(/\r/g,"").replace(/[ \t]+/g," ").replace(/\n{3,}/g,"\n\n").trim();
+  const chunks: string[] = [];
+  let start = 0;
+  while (start < text.length && chunks.length < 160) {
+    let end = Math.min(start + size, text.length);
+    if (end < text.length) {
+      const boundary = text.lastIndexOf("\n",end);
+      if (boundary > start + Math.floor(size * 0.55)) end = boundary;
+    }
+    const chunk = text.slice(start,end).trim();
+    if (chunk.length >= 80) chunks.push(chunk);
+    if (end >= text.length) break;
+    start = Math.max(start + 1,end - overlap);
+  }
+  return chunks;
+}
+
+async function extractText(file: File, bytes: Uint8Array) {
+  if (file.type === "text/plain") return new TextDecoder("utf-8",{fatal:false}).decode(bytes);
+  if (file.type === "application/vnd.openxmlformats-officedocument.wordprocessingml.document") {
+    const result = await mammoth.extractRawText({ buffer: Buffer.from(bytes) });
+    return result.value;
+  }
+  if (file.type === "application/pdf") {
+    const pdf = await getDocument({ data: bytes, useSystemFonts: true, disableFontFace: true, isEvalSupported: false }).promise;
+    const pages: string[] = [];
+    for (let pageNumber = 1; pageNumber <= pdf.numPages; pageNumber++) {
+      const page = await pdf.getPage(pageNumber);
+      const content = await page.getTextContent();
+      const pageText = content.items.map(item => "str" in item ? item.str : "").filter(Boolean).join(" ");
+      if (pageText.trim()) pages.push(pageText);
+    }
+    await pdf.destroy();
+    return pages.join("\n\n");
+  }
+  throw new Error("Unsupported document type.");
+}
+
+async function processDocument(supabase: Awaited<ReturnType<typeof context>> extends {supabase: infer S} ? S : never, userId: string, documentId: string, file: File) {
+  if (!process.env.AI_GATEWAY_API_KEY && !process.env.VERCEL_OIDC_TOKEN) {
+    return { processing_status: "pending", processing_message: "Uploaded securely. Connect AI Gateway to extract and index this file." };
+  }
+  try {
+    await supabase.from("documents").update({ processing_status:"processing" }).eq("id",documentId).eq("user_id",userId);
+    const bytes = new Uint8Array(await file.arrayBuffer());
+    const extracted = (await extractText(file,bytes)).slice(0,MAX_TEXT_CHARS);
+    if (extracted.trim().length < 40) throw new Error("No readable text was found. Scanned image-only PDFs need OCR and are not supported yet.");
+    const chunks = chunkText(extracted);
+    if (!chunks.length) throw new Error("The document did not contain enough readable text to index.");
+    const { embeddings } = await embedMany({
+      model: process.env.AI_GATEWAY_EMBEDDING_MODEL || "openai/text-embedding-3-small",
+      values: chunks,
+      maxParallelCalls: 2,
+      maxRetries: 1
+    });
+    const rows = chunks.map((content,index) => ({
+      document_id:documentId,user_id:userId,chunk_index:index,content,
+      embedding:embeddings[index],
+      metadata:{ character_count:content.length, extraction:"text-layer", truncated:extracted.length>=MAX_TEXT_CHARS }
+    }));
+    const { error: insertError } = await supabase.from("document_chunks").insert(rows);
+    if (insertError) throw new Error("Document text was extracted but indexing failed. Check the database migration and vector permissions.");
+    await supabase.from("documents").update({ processing_status:"ready" }).eq("id",documentId).eq("user_id",userId);
+    return { processing_status:"ready", indexed_chunks:chunks.length };
+  } catch (error) {
+    await supabase.from("documents").update({ processing_status:"failed" }).eq("id",documentId).eq("user_id",userId);
+    return { processing_status:"failed", processing_message:error instanceof Error ? error.message : "Document processing failed." };
+  }
 }
 
 export async function GET() {
@@ -48,7 +124,8 @@ export async function POST(request: Request) {
     await ctx.supabase.storage.from(BUCKET).remove([path]);
     return NextResponse.json({ error: "File uploaded but its record could not be saved." }, { status: 500 });
   }
-  return NextResponse.json({ document: data }, { status: 201, headers: { "Cache-Control": "private, no-store" } });
+  const processing = await processDocument(ctx.supabase,ctx.userId,data.id,file);
+  return NextResponse.json({ document:{...data,...processing} }, { status: 201, headers: { "Cache-Control": "private, no-store" } });
 }
 
 export async function DELETE(request: Request) {
