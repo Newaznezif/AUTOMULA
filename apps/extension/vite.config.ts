@@ -1,5 +1,7 @@
-import { resolve } from "node:path";
+import { fileURLToPath } from "node:url";
 import { defineConfig } from "vite";
+
+const root = fileURLToPath(new URL(".", import.meta.url));
 
 export default defineConfig({
   build: {
@@ -7,9 +9,9 @@ export default defineConfig({
     emptyOutDir: true,
     rollupOptions: {
       input: {
-        background: resolve(__dirname, "src/background.ts"),
-        content: resolve(__dirname, "src/content/content.ts"),
-        sidepanel: resolve(__dirname, "sidepanel.html")
+        background: `${root}src/background.ts`,
+        content: `${root}src/content/content.ts`,
+        sidepanel: `${root}sidepanel.html`
       },
       output: {
         entryFileNames: "[name].js",
