@@ -1,4 +1,4 @@
-import { Settings, ShieldCheck, Database, KeyRound } from "lucide-react";
+import { ShieldCheck, Database, KeyRound } from "lucide-react";
 import { isSupabaseConfigured } from "@/lib/supabase/env";
 import { SignOutButton } from "@/components/sign-out-button";
 
