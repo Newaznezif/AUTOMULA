@@ -21,7 +21,7 @@ pnpm --filter @automula/web exec playwright install chromium
 E2E_BASE_URL=https://<staging-host> E2E_EMAIL=<test-account> E2E_PASSWORD=<test-password> pnpm --filter @automula/web test:e2e
 ```
 
-The Playwright suite covers login, invalid-credential rejection, optional password recovery initiation, knowledge create/read/update/delete persistence, optional cross-account isolation, document upload/list/delete persistence, AI source attribution against a unique saved fact (including protection of prefilled fields), and the dashboard-to-extension pairing bridge contract. Tests clean up their created records in `finally` blocks. Full recovery-link consumption and password replacement still require an accessible test mailbox and are a release acceptance check.
+The Playwright suite covers login, invalid-credential rejection, optional password recovery initiation, knowledge create/read/update/delete persistence, optional cross-account isolation, document upload/storage-object verification/list/delete persistence, AI source attribution against a unique saved fact (including protection of prefilled fields), and the dashboard-to-extension pairing bridge contract. Tests clean up their created records in `finally` blocks. Full recovery-link consumption and password replacement still require an accessible test mailbox and are a release acceptance check.
 
 ## Manual Chrome extension acceptance
 

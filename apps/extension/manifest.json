@@ -4,24 +4,16 @@
   "version": "0.2.0",
   "description": "Understand forms, prepare grounded answers, and fill approved fields.",
   "key": "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAo4tYn3qDRrH8ruZ9i1AmryD4SJ/7vEj5N4PIeACKnyS+fBLaP5XdTMj4QyNmXEtHccJOIrktu3gw3bsfTRXij7bVxs7vr80agd58ybobj5y49dMb4sHoGu3AekIOKc1GPXYIVDq8GFCPsokgwrc7ykdnhaFdz4t81Wq2KfTZPsQ5ShDX1XhXyvvduU2+VIxfKSaiYLHsBH1DV+04XUV2EkC+bq1D67k5KctOrfcMpLHMudS4DFHGNxqyTiOklNQT1Qvx9t8uSpWEHf3/tTj6n+Q/QI1c+bYlZsVGhTBWb0mW1g1VXh5YMDWlGeDi2euDmGws9Pnq6e8SaiavCZ0abwIDAQAB",
-  "permissions": [
-    "activeTab",
-    "scripting",
-    "storage",
-    "sidePanel"
-  ],
+  "permissions": ["activeTab", "scripting", "storage", "sidePanel"],
   "host_permissions": [
     "https://automula.vercel.app/*",
     "https://automula-git-phase-2-core-workflows-newaznezifs-projects.vercel.app/*"
   ],
-  "optional_host_permissions": [
-    "https://*/*",
-    "http://*/*"
-  ],
+  "optional_host_permissions": ["https://*/*", "http://*/*"],
   "externally_connectable": {
     "matches": [
       "https://automula.vercel.app/*",
-    "https://automula-git-phase-2-core-workflows-newaznezifs-projects.vercel.app/*"
+      "https://automula-git-phase-2-core-workflows-newaznezifs-projects.vercel.app/*"
     ]
   },
   "background": {
