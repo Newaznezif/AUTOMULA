@@ -88,7 +88,7 @@ test.describe("AUTOMULA authenticated product workflows", () => {
       await page.request.delete("/api/workspace/knowledge", { data: { id: recordId } });
     }
   });
-  test("document upload persists metadata and private storage object", async ({ page }) => {
+  test("document upload verifies the private storage object and persists metadata", async ({ page }) => {
     const marker = `AUTOMULA-DOCUMENT-E2E-${Date.now()}`;
     let documentId = "";
 
@@ -105,7 +105,7 @@ test.describe("AUTOMULA authenticated product workflows", () => {
       expect(uploaded.status()).toBe(201);
       const body = await uploaded.json();
       documentId = body.document.id;
-      expect(["pending", "ready", "failed"]).toContain(body.document.processing_status);
+      expect(["pending", "ready", "failed"]).toContain(body.document.processing_status);\n      expect(body.document.storage_verified).toBe(true);
 
       const listed = await page.request.get("/api/documents");
       expect(listed.ok()).toBeTruthy();
