@@ -18,5 +18,6 @@ h1 { margin: 9px 0; font-size: 25px; letter-spacing: -.04em; }
 .muted, .status { color: #9aa8bf; font-size: 12px; line-height: 1.7; }
 button { width: 100%; margin-top: 18px; padding: 12px; border: 0; border-radius: 10px; background: #3975f6; color: white; font-weight: 700; cursor: pointer; }
 button:hover { background: #5288ff; }
-.status { min-height: 42px; margin-top: 14px; }
+.count { margin: 12px 0 0; color: #86efac; font-size: 12px; font-weight: 600; }
+.status { min-height: 42px; margin-top: 10px; }
 footer { margin-top: 28px; padding-top: 15px; border-top: 1px solid #253047; color: #718096; font-size: 10px; line-height: 1.6; }
