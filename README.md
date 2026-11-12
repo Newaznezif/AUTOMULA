@@ -50,7 +50,7 @@ Requirements: Git, Node.js 22, pnpm 10, and Chrome.
 Clone the implementation branch:
 
 ```powershell
-git clone --branch phase-1-foundation https://github.com/NewazNezif/AUTOMULA.git "C:\Users\It's Blue\AUTOMULA"
+git clone --branch phase-2-core-workflows https://github.com/NewazNezif/AUTOMULA.git "C:\Users\It's Blue\AUTOMULA"
 Set-Location "C:\Users\It's Blue\AUTOMULA"
 ```
 
@@ -122,5 +122,5 @@ pnpm --filter @automula/extension build
 
 ## Development branch
 
-Active implementation branch: `phase-1-foundation`  
+Active implementation branch: `phase-2-core-workflows`  
 Main branch: preserved; not replaced by this implementation.

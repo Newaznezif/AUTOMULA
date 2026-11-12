@@ -26,7 +26,7 @@ const knowledgeUpdateSchema = z.object({
   category: z.enum(["personal","education","experience","skills","certification","project","achievement","preference","other"]).optional(),
   source_reference: z.string().trim().max(1000).optional().nullable(),
   verified: z.boolean().optional()
-}).refine(({ id, ...data }) => Object.keys(data).length > 0);
+}).refine(value => Object.keys(value).some(key => key !== "id"));
 const projectUpdateSchema = z.object({
   id: z.string().uuid(),
   name: z.string().trim().min(1).max(180).optional(),
@@ -35,7 +35,7 @@ const projectUpdateSchema = z.object({
   status: z.string().trim().max(60).optional().nullable(),
   website_url: z.string().url().max(1000).optional().or(z.literal("")).nullable(),
   repository_url: z.string().url().max(1000).optional().or(z.literal("")).nullable()
-}).refine(({ id, ...data }) => Object.keys(data).length > 0);
+}).refine(value => Object.keys(value).some(key => key !== "id"));
 
 async function getContext() {
   if (!isSupabaseConfigured()) return { error: "Supabase backend is not connected.", status: 503 as const };
