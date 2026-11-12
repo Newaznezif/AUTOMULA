@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
+import type { SupabaseClient } from "@supabase/supabase-js";
 import { embedMany } from "ai";
 import { getDocument } from "pdfjs-dist/legacy/build/pdf.mjs";
 import mammoth from "mammoth";
@@ -65,7 +66,7 @@ async function extractText(file: File, bytes: Uint8Array) {
   throw new Error("Unsupported document type.");
 }
 
-async function processDocument(supabase: Awaited<ReturnType<typeof context>> extends {supabase: infer S} ? S : never, userId: string, documentId: string, file: File) {
+async function processDocument(supabase: SupabaseClient, userId: string, documentId: string, file: File) {
   if (!process.env.AI_GATEWAY_API_KEY && !process.env.VERCEL_OIDC_TOKEN) {
     return { processing_status: "pending", processing_message: "Uploaded securely. Connect AI Gateway to extract and index this file." };
   }
