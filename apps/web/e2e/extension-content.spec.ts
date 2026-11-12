@@ -20,6 +20,8 @@ test("compiled extension content script detects fields and fills only approved e
           <option value="ET">Ethiopia</option>
           <option value="KE">Kenya</option>
         </select>
+        <label for="city">City</label>
+        <input id="city" name="city" type="text">
         <input type="password" aria-label="Password">
         <input type="hidden" name="secret" value="hidden">
       </form>
@@ -51,7 +53,7 @@ test("compiled extension content script detects fields and fills only approved e
   });
 
   expect(detected.ok).toBe(true);
-  expect(detected.form.fields.map(field => field.question)).toEqual(["Full name", "Email address", "Country"]);
+  expect(detected.form.fields.map(field => field.question)).toEqual(["Full name", "Email address", "Country", "City"]);
   expect(detected.form.fields[1].hasExistingValue).toBe(true);
   expect(detected.form.fields[2].fieldType).toBe("select");
 
@@ -63,15 +65,17 @@ test("compiled extension content script detects fields and fills only approved e
       values: [
         { fieldId: "automula-field-1", value: "Ada Lovelace", approved: true },
         { fieldId: "automula-field-2", value: "overwrite@example.com", approved: true },
-        { fieldId: "automula-field-3", value: "ET", approved: false }
+        { fieldId: "automula-field-3", value: "ET", approved: true },
+        { fieldId: "automula-field-4", value: "Addis Ababa", approved: false }
       ]
     }, {}, value => { response = value; });
     return response as { ok: boolean; results: Array<{ fieldId: string; status: string }> };
   });
 
   expect(fillResponse.ok).toBe(true);
-  expect(fillResponse.results.map(result => result.status)).toEqual(["filled", "skipped", "skipped"]);
+  expect(fillResponse.results.map(result => result.status)).toEqual(["filled", "skipped", "filled", "skipped"]);
   await expect(page.locator("#full-name")).toHaveValue("Ada Lovelace");
   await expect(page.locator("#email")).toHaveValue("existing@example.com");
-  await expect(page.locator("#country")).toHaveValue("");
+  await expect(page.locator("#country")).toHaveValue("ET");
+  await expect(page.locator("#city")).toHaveValue("");
 });
