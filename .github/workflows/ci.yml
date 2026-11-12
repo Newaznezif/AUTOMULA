@@ -2,9 +2,9 @@ name: AUTOMULA CI
 
 on:
   push:
-    branches: [main, phase-1-foundation, phase-2-core-workflows, phase-3-product-polish, phase-4-workspace-reliability, phase-5-e2e-functionality]
+    branches: [main, phase-1-foundation, phase-2-core-workflows, phase-3-product-polish, phase-4-workspace-reliability, phase-5-e2e-functionality, phase-6-production-hardening]
   pull_request:
-    branches: [main]
+    branches: [main, phase-4-workspace-reliability]
 
 permissions:
   contents: read
@@ -38,7 +38,11 @@ jobs:
       - name: Typecheck extension
         run: pnpm --filter @automula/extension typecheck
 
-      - name: Validate Chrome extension manifests\n        run: pnpm --filter @automula/extension check:manifest\n\n      - name: Build extension\n        run: pnpm --filter @automula/extension build
+      - name: Validate Chrome extension manifests
+        run: pnpm --filter @automula/extension check:manifest
+
+      - name: Build extension
+        run: pnpm --filter @automula/extension build
 
       - name: Install Chromium for end-to-end tests
         if: ${{ vars.E2E_BASE_URL != '' }}
@@ -50,5 +54,8 @@ jobs:
           E2E_BASE_URL: ${{ vars.E2E_BASE_URL }}
           E2E_EMAIL: ${{ secrets.E2E_EMAIL }}
           E2E_PASSWORD: ${{ secrets.E2E_PASSWORD }}
-          E2E_RUN_AI: ${{ vars.E2E_RUN_AI }}\n          E2E_RUN_AUTH_RECOVERY: ${{ vars.E2E_RUN_AUTH_RECOVERY }}\n          E2E_SECOND_EMAIL: ${{ secrets.E2E_SECOND_EMAIL }}\n          E2E_SECOND_PASSWORD: ${{ secrets.E2E_SECOND_PASSWORD }}
+          E2E_RUN_AI: ${{ vars.E2E_RUN_AI }}
+          E2E_RUN_AUTH_RECOVERY: ${{ vars.E2E_RUN_AUTH_RECOVERY }}
+          E2E_SECOND_EMAIL: ${{ secrets.E2E_SECOND_EMAIL }}
+          E2E_SECOND_PASSWORD: ${{ secrets.E2E_SECOND_PASSWORD }}
         run: pnpm --filter @automula/web test:e2e
