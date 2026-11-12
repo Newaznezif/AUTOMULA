@@ -3,8 +3,8 @@ import { createRoot } from "react-dom/client";
 import type { DetectedFormField, FillResult } from "@automula/shared";
 import "./style.css";
 
-const API_BASE = "https://automula.vercel.app";
-type StoredSession = { accessToken: string; refreshToken: string; expiresAt: number };
+const DASHBOARD_URL = "https://automula.vercel.app/dashboard/extension";
+type StoredSession = { accessToken: string; refreshToken: string; expiresAt: number; apiBase?: string };
 type Suggestion = {
   fieldId: string;
   suggestionId: string | null;
@@ -23,7 +23,8 @@ async function readSession(): Promise<StoredSession | null> {
 }
 
 async function refreshSession(session: StoredSession): Promise<StoredSession> {
-  const response = await fetch(`${API_BASE}/api/extension/refresh`, {
+  const apiBase = session.apiBase || "https://automula.vercel.app";
+  const response = await fetch(`${apiBase}/api/extension/refresh`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ refreshToken: session.refreshToken })
@@ -44,7 +45,8 @@ async function apiRequest(path: string, init: RequestInit = {}) {
     const headers = new Headers(init.headers);
     headers.set("Authorization", `Bearer ${token}`);
     if (init.body && !(init.body instanceof FormData)) headers.set("Content-Type", "application/json");
-    return fetch(`${API_BASE}${path}`, { ...init, headers });
+    const apiBase = session.apiBase || "https://automula.vercel.app";
+    return fetch(`${apiBase}${path}`, { ...init, headers });
   };
 
   let response = await send(session.accessToken);
@@ -120,7 +122,7 @@ function SidePanel() {
   async function generateSuggestions() {
     if (!connected) {
       setStatus("Connect your AUTOMULA account first.");
-      await chrome.tabs.create({ url: `${API_BASE}/dashboard/extension` });
+      await chrome.tabs.create({ url: DASHBOARD_URL });
       return;
     }
     if (!fields.length) return;
@@ -163,20 +165,22 @@ function SidePanel() {
     const row = suggestions.find(item => item.fieldId === field.fieldId);
     const value = answers[field.fieldId]?.trim() ?? "";
     if (!value || field.hasExistingValue) return;
+    if (!row?.suggestionId) {
+      setStatus("Generate suggestions first. You can then edit your answer and approve the saved version.");
+      return;
+    }
     setBusy(true);
     setStatus("Saving your edit and recording approval…");
     try {
-      if (row?.suggestionId) {
-        const edit = await apiRequest(`/api/forms/answers/${row.suggestionId}`, {
-          method: "PATCH",
-          body: JSON.stringify({ answer: value })
-        });
-        const editData = await edit.json();
-        if (!edit.ok) throw new Error(editData.error || "Could not save the answer.");
-        const approval = await apiRequest(`/api/forms/answers/${row.suggestionId}/approve`, { method: "POST" });
-        const approvalData = await approval.json();
-        if (!approval.ok) throw new Error(approvalData.error || "Could not approve the answer.");
-      }
+      const edit = await apiRequest(`/api/forms/answers/${row.suggestionId}`, {
+        method: "PATCH",
+        body: JSON.stringify({ answer: value })
+      });
+      const editData = await edit.json();
+      if (!edit.ok) throw new Error(editData.error || "Could not save the answer.");
+      const approval = await apiRequest(`/api/forms/answers/${row.suggestionId}/approve`, { method: "POST" });
+      const approvalData = await approval.json();
+      if (!approval.ok) throw new Error(approvalData.error || "Could not approve the answer.");
       setApproved(current => ({ ...current, [field.fieldId]: true }));
       setSuggestions(current => current.map(item => item.fieldId === field.fieldId ? { ...item, approved: true } : item));
       setStatus("Answer approved. It can now be filled into the page.");
@@ -221,6 +225,19 @@ function SidePanel() {
     setStatus("Extension disconnected from your AUTOMULA account.");
   }
 
+  function updateAnswer(fieldId: string, value: string) {
+    setAnswers(current => ({ ...current, [fieldId]: value }));
+    setApproved(current => {
+      if (!current[fieldId]) return current;
+      const next = { ...current };
+      delete next[fieldId];
+      return next;
+    });
+    setSuggestions(current => current.map(item =>
+      item.fieldId === fieldId ? { ...item, approved: false } : item
+    ));
+  }
+
   const sourceMap = new Map(sources.map(source => [source.id, source]));
   const confidenceClass = { high: "high", medium: "medium", low: "low", unsupported: "unsupported" };
 
@@ -234,7 +251,7 @@ function SidePanel() {
         <div className="connection">
           <span className={connected ? "connected-dot" : "disconnected-dot"} />
           <span>{connected ? "Account connected" : "Account not connected"}</span>
-          {connected ? <button className="link-button" onClick={() => void disconnect()}>Disconnect</button> : <button className="link-button" onClick={() => void chrome.tabs.create({ url: `${API_BASE}/dashboard/extension` })}>Connect account</button>}
+          {connected ? <button className="link-button" onClick={() => void disconnect()}>Disconnect</button> : <button className="link-button" onClick={() => void chrome.tabs.create({ url: DASHBOARD_URL })}>Connect account</button>}
         </div>
         <button disabled={busy} onClick={() => void detect()}>{busy ? "Please wait…" : "Detect form fields"}</button>
         <p className="status" role="status">{status}</p>
@@ -254,7 +271,7 @@ function SidePanel() {
                 <p className="question">{field.question}</p>
                 {field.hasExistingValue ? <p className="existing">Existing value detected · preserved</p> :
                   field.fieldType === "select" ? (
-                    <select value={answers[field.fieldId] || ""} onChange={event => setAnswers(current => ({ ...current, [field.fieldId]: event.target.value }))}>
+                    <select value={answers[field.fieldId] || ""} onChange={event => updateAnswer(field.fieldId, event.target.value)}>
                       <option value="">Choose an available option…</option>
                       {field.options.map(option => <option key={option.value} value={option.value}>{option.label}</option>)}
                     </select>
@@ -267,7 +284,7 @@ function SidePanel() {
                   {sourceLabels.length > 0 && <div className="sources">{sourceLabels.map(source => <span key={source.id}>{source.label}{source.verified ? " · verified" : ""}</span>)}</div>}
                   {suggestion.confidence === "unsupported" && <p className="hint">No evidence-backed answer was found. Leave blank or provide your own accurate answer.</p>}
                 </div>}
-                {!field.hasExistingValue && <button className={approved[field.fieldId] ? "approved-button" : "approve-button"} disabled={busy || !answers[field.fieldId]?.trim() || Boolean(approved[field.fieldId])} onClick={() => void approveAnswer(field)}>{approved[field.fieldId] ? "Approved" : "Approve this answer"}</button>}
+                {!field.hasExistingValue && <button className={approved[field.fieldId] ? "approved-button" : "approve-button"} disabled={busy || !suggestion?.suggestionId || !answers[field.fieldId]?.trim() || Boolean(approved[field.fieldId])} onClick={() => void approveAnswer(field)}>{approved[field.fieldId] ? "Approved" : "Approve this answer"}</button>}
                 {result && <p className={`result ${result.status}`}>{result.status}: {result.message || "Value verified"}</p>}
               </article>
             );
