@@ -1,18 +1,28 @@
 # AUTOMULA Chrome Extension
 
-Manifest V3 extension foundation for FormPilot AI.
+Manifest V3 browser companion for AUTOMULA / FormPilot AI.
 
-## Current status
-- Manifest permissions and side-panel entry point are defined.
-- A user-message-driven native DOM field detector is included.
-- Shared field contracts are defined in `@automula/shared`.
+## Current workflow
 
-## Not yet implemented
-- Vite multi-entry build and generated extension assets.
-- Authentication and secure device pairing.
-- Side panel UI.
-- Google Forms adapter.
-- Backend integration.
-- Approved-value filling and verification.
+1. Build the extension from the repository root with \`pnpm --filter @automula/extension build\`.
+2. In Chrome, open \`chrome://extensions\`, enable Developer mode, and choose **Load unpacked**.
+3. Select \`apps/extension/dist\`.
+4. Sign in to AUTOMULA at https://automula.vercel.app.
+5. Open **Connect extension** in the dashboard and connect this browser session.
+6. Open a normal HTTP/HTTPS form, open the AUTOMULA side panel, and detect fields.
+7. Generate AI suggestions, review evidence, edit answers, and approve each field.
+8. Fill approved fields. Review the page and submit it yourself.
 
-Do not load this as a functional release yet. The extension build pipeline and end-to-end tests are part of the next implementation steps.
+The extension stores its short-lived access and refresh tokens in Chrome session storage. They are cleared when the browser session ends or when the user disconnects. The extension does not write them to persistent local storage.
+
+## Supported controls
+
+Visible, labeled text, email, telephone, number, date, textarea, and select controls. Existing values are preserved. Checkbox/radio groups, file uploads, password fields, custom widgets, cross-origin frames, CAPTCHA, and MFA are not automated.
+
+## Security
+
+- External account pairing accepts messages only from the AUTOMULA dashboard origin.
+- AI requests use the signed-in user's Supabase access token and Row Level Security.
+- Each answer must be explicitly approved before filling.
+- The extension never submits forms or executes model-generated code.
+- Page content is treated as untrusted input by the answer-generation service.

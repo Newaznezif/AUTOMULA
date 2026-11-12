@@ -2,7 +2,7 @@ name: AUTOMULA CI
 
 on:
   push:
-    branches: [main, phase-1-foundation]
+    branches: [main, phase-1-foundation, phase-2-core-workflows]
   pull_request:
     branches: [main]
 

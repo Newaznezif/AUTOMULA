@@ -33,9 +33,9 @@ export function ProfileForm({ initialProfile }: { initialProfile: Record<string,
     finally { setBusy(false); }
   }
 
-  return <form onSubmit={save} className="rounded-2xl border border-white/10 bg-slate-900/40 p-6">
-    <div className="grid gap-5 sm:grid-cols-2">{fields.map(field => <label key={field.name} className="block text-xs font-medium text-slate-300">{field.label}<input type={field.type ?? "text"} value={values[field.name]} onChange={e => setValues(v => ({...v,[field.name]:e.target.value}))} placeholder={field.placeholder} className="mt-2 w-full rounded-xl border border-white/10 bg-slate-950/70 px-3 py-3 text-sm outline-none focus:border-blue-400"/></label>)}</div>
-    <label className="mt-5 block text-xs font-medium text-slate-300">Professional summary<textarea rows={5} maxLength={3000} value={values.professional_summary} onChange={e => setValues(v => ({...v,professional_summary:e.target.value}))} placeholder="A concise summary grounded in your real experience…" className="mt-2 w-full resize-y rounded-xl border border-white/10 bg-slate-950/70 px-3 py-3 text-sm leading-6 outline-none focus:border-blue-400"/></label>
+  return <form onSubmit={save} className="surface-card p-6">
+    <div className="grid gap-5 sm:grid-cols-2">{fields.map(field => <label key={field.name} className="field-label">{field.label}<input type={field.type ?? "text"} value={values[field.name]} onChange={e => setValues(v => ({...v,[field.name]:e.target.value}))} placeholder={field.placeholder} className="mt-2 w-full form-control"/></label>)}</div>
+    <label className="field-label mt-5">Professional summary<textarea rows={5} maxLength={3000} value={values.professional_summary} onChange={e => setValues(v => ({...v,professional_summary:e.target.value}))} placeholder="A concise summary grounded in your real experience…" className="mt-2 w-full resize-y form-control"/></label>
     <div className="mt-6 flex flex-wrap items-center gap-4"><button disabled={busy} className="inline-flex items-center gap-2 rounded-xl bg-blue-500 px-4 py-3 text-sm font-semibold text-white hover:bg-blue-400 disabled:opacity-50">{busy ? <LoaderCircle size={15} className="animate-spin"/> : <Save size={15}/>}Save profile</button>{error && <p role="alert" className="text-xs text-rose-300">{error}</p>}{notice && <p role="status" className="flex items-center gap-2 text-xs text-emerald-300"><CheckCircle2 size={14}/>{notice}</p>}</div>
   </form>;
 }
