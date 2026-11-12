@@ -4,7 +4,8 @@
   "private": true,
   "scripts": {
     "build": "vite build",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "check:manifest": "node -e \"const fs=require('node:fs');const a=JSON.parse(fs.readFileSync('manifest.json','utf8'));const b=JSON.parse(fs.readFileSync('public/manifest.json','utf8'));if(JSON.stringify(a)!==JSON.stringify(b))throw new Error('Root and public Chrome manifests differ');console.log('Both Chrome manifests are valid and identical')\""
   },
   "dependencies": {
     "@automula/shared": "workspace:*",
