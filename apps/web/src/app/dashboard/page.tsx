@@ -20,7 +20,7 @@ export default async function DashboardPage() {
         supabase.from("projects").select("id", { count: "exact", head: true }).eq("user_id", userId),
         supabase.from("documents").select("id", { count: "exact", head: true }).eq("user_id", userId)
       ]);
-      profileName = profile.data?.full_name || String(claims.claims.email ?? "Your workspace");
+      profileName = profile.data?.full_name || String(claims?.claims?.email ?? "Your workspace");
       knowledgeCount = knowledge.count ?? 0;
       projectCount = projects.count ?? 0;
       documentCount = documents.count ?? 0;
