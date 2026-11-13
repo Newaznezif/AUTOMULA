@@ -11,11 +11,18 @@ export async function middleware(request: NextRequest) {
   const supabase = createServerClient(url, key, {
     cookies: {
       getAll: () => request.cookies.getAll(),
-      setAll(cookiesToSet: { name: string; value: string; options?: unknown }[], headers: Record<string, string>) {
+      setAll(
+        cookiesToSet: { name: string; value: string; options?: unknown }[],
+        headers?: Record<string, string>
+      ) {
         cookiesToSet.forEach(({ name, value }) => request.cookies.set(name, value));
         response = NextResponse.next({ request });
-        cookiesToSet.forEach(({ name, value, options }) => response.cookies.set(name, value, options as never));
-        Object.entries(headers).forEach(([name, value]) => response.headers.set(name, value));
+        cookiesToSet.forEach(({ name, value, options }) =>
+          response.cookies.set(name, value, options as never)
+        );
+        Object.entries(headers ?? {}).forEach(([name, value]) =>
+          response.headers.set(name, value)
+        );
       }
     }
   });
