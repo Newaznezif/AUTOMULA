@@ -21,33 +21,78 @@ export function ExtensionConnectClient() {
     setBusy(true);
     setStatus("");
     setFailed(false);
+
     try {
       const supabase = createClient();
-      const { data, error } = await supabase.auth.getSession();
-      if (error || !data.session) throw new Error("Your AUTOMULA session is unavailable. Sign in again.");
+
+      // Renew the Supabase session before handing credentials to the extension.
+      // This ensures we send the latest rotated refresh token, not a stale copy.
+      const { data, error } = await supabase.auth.refreshSession();
+      const session = data.session;
+
+      if (error || !session) {
+        throw new Error(
+          "Your AUTOMULA sign-in could not be renewed. Sign out of AUTOMULA, sign in again, then retry the extension connection."
+        );
+      }
+
+      if (
+        typeof session.access_token !== "string" ||
+        session.access_token.length < 20 ||
+        typeof session.refresh_token !== "string" ||
+        session.refresh_token.length < 20
+      ) {
+        throw new Error(
+          "Your current sign-in does not contain a complete Supabase session. Sign out completely, sign in again, and retry."
+        );
+      }
 
       const bridge = (window as Window & { chrome?: ExtensionBridge }).chrome;
-      if (!bridge?.runtime?.sendMessage) throw new Error("Chrome extension messaging is unavailable. Install or enable the AUTOMULA extension first.");
+      if (!bridge?.runtime?.sendMessage) {
+        throw new Error(
+          "Chrome extension messaging is unavailable. Enable the installed AUTOMULA extension and reload this page."
+        );
+      }
 
       await new Promise<void>((resolve, reject) => {
-        bridge.runtime!.sendMessage(EXTENSION_ID, {
-          type: "AUTOMULA_CONNECT",
-          accessToken: data.session!.access_token,
-          refreshToken: data.session!.refresh_token,
-          expiresAt: data.session!.expires_at ?? Math.floor(Date.now() / 1000) + data.session!.expires_in,
-          apiBase: window.location.origin
-        }, response => {
-          const runtimeError = bridge.runtime?.lastError;
-          if (runtimeError) reject(new Error("Extension not found. Load the AUTOMULA extension in Chrome and try again."));
-          else if (!response?.ok) reject(new Error(response?.error || "The extension could not be connected."));
-          else resolve();
-        });
+        bridge.runtime!.sendMessage(
+          EXTENSION_ID,
+          {
+            type: "AUTOMULA_CONNECT",
+            accessToken: session.access_token,
+            refreshToken: session.refresh_token,
+            expiresAt:
+              session.expires_at ??
+              Math.floor(Date.now() / 1000) + session.expires_in,
+            apiBase: window.location.origin,
+          },
+          (response) => {
+            const runtimeError = bridge.runtime?.lastError;
+            if (runtimeError) {
+              reject(
+                new Error(
+                  "Extension not found. Reload AUTOMULA in chrome://extensions and try again."
+                )
+              );
+            } else if (!response?.ok) {
+              reject(
+                new Error(response?.error || "The extension could not be connected.")
+              );
+            } else {
+              resolve();
+            }
+          }
+        );
       });
 
-      setStatus("AUTOMULA is connected to this Chrome browser session. You can now generate answers from the extension.");
+      setStatus(
+        "AUTOMULA is connected to this Chrome browser session. You can now generate answers from the extension."
+      );
     } catch (error) {
       setFailed(true);
-      setStatus(error instanceof Error ? error.message : "Could not connect the extension.");
+      setStatus(
+        error instanceof Error ? error.message : "Could not connect the extension."
+      );
     } finally {
       setBusy(false);
     }
@@ -55,10 +100,31 @@ export function ExtensionConnectClient() {
 
   return (
     <section className="rounded-2xl border border-white/10 bg-slate-900/40 p-6">
-      <p className="text-sm leading-6 text-slate-400">Connect the installed Chrome extension to your signed-in AUTOMULA account. The extension receives a session token for this browser session only; it is held in Chrome session storage and is not written to disk by AUTOMULA.</p>
-      <button onClick={() => void connect()} disabled={busy} className="mt-5 rounded-xl bg-blue-500 px-5 py-3 text-sm font-semibold text-white hover:bg-blue-400 disabled:opacity-50">{busy ? "Connecting…" : "Connect Chrome extension"}</button>
-      {status && <p role={failed ? "alert" : "status"} className={`mt-4 text-sm leading-6 ${failed ? "text-rose-300" : "text-emerald-300"}`}>{status}</p>}
-      <p className="mt-5 text-xs leading-5 text-slate-500">Only connect an extension you installed from the official AUTOMULA repository. Disconnecting or closing the browser session removes the temporary extension session.</p>
+      <p className="text-sm leading-6 text-slate-400">
+        Connect the installed Chrome extension to your signed-in AUTOMULA account.
+        The extension receives a session token for this browser session only; it is
+        held in Chrome session storage and is not written to disk by AUTOMULA.
+      </p>
+      <button
+        onClick={() => void connect()}
+        disabled={busy}
+        className="mt-5 rounded-xl bg-blue-500 px-5 py-3 text-sm font-semibold text-white hover:bg-blue-400 disabled:opacity-50"
+      >
+        {busy ? "Connecting…" : "Connect Chrome extension"}
+      </button>
+      {status && (
+        <p
+          role={failed ? "alert" : "status"}
+          className={`mt-4 text-sm leading-6 ${failed ? "text-rose-300" : "text-emerald-300"}`}
+        >
+          {status}
+        </p>
+      )}
+      <p className="mt-5 text-xs leading-5 text-slate-500">
+        Only connect an extension you installed from the official AUTOMULA
+        repository. Disconnecting or closing the browser session removes the
+        temporary extension session.
+      </p>
     </section>
   );
 }
