@@ -32,9 +32,14 @@ chrome.runtime.onMessageExternal.addListener((message, sender, sendResponse) => 
 
   if (message?.type === "AUTOMULA_CONNECT") {
     const { accessToken, refreshToken, expiresAt, apiBase } = message;
-    if (typeof accessToken !== "string" || accessToken.length < 20 ||
-        typeof refreshToken !== "string" || refreshToken.length < 20 ||
-        typeof expiresAt !== "number" || apiBase !== sender.origin) {
+    const now = Math.floor(Date.now() / 1000);
+    const validToken = (value: unknown): value is string =>
+      typeof value === "string" && value.length >= 20 && value.length <= 16_384 && value.trim() === value;
+    if (!validToken(accessToken) ||
+        !validToken(refreshToken) ||
+        typeof expiresAt !== "number" || !Number.isFinite(expiresAt) ||
+        expiresAt <= now || expiresAt > now + 60 * 60 * 24 * 90 ||
+        apiBase !== sender.origin) {
       sendResponse({ ok: false, error: "Invalid session information." });
       return false;
     }
