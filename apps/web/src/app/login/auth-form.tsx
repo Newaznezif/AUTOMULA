@@ -38,7 +38,7 @@ export function AuthForm({ initialMode }: { initialMode: "login" | "signup" }) {
           router.refresh();
         }
       } else {
-        const { error } = await supabase.auth.signInWithPassword({
+        const { data, error } = await supabase.auth.signInWithPassword({
           email: normalizedEmail,
           password
         });
@@ -51,6 +51,43 @@ export function AuthForm({ initialMode }: { initialMode: "login" | "signup" }) {
           }
           throw error;
         }
+
+        // Explicitly persist the complete session returned by the password
+        // grant, then read it back. This catches browser-cookie persistence
+        // problems at login instead of discovering them later during pairing.
+        const loginSession = data.session;
+        if (
+          !loginSession?.access_token ||
+          typeof loginSession.refresh_token !== "string" ||
+          loginSession.refresh_token.length < 20
+        ) {
+          throw new Error(
+            "Supabase authenticated this account but did not return a complete browser session (refresh token missing). Check the Supabase Auth response and project configuration."
+          );
+        }
+
+        const { error: persistError } = await supabase.auth.setSession({
+          access_token: loginSession.access_token,
+          refresh_token: loginSession.refresh_token
+        });
+        if (persistError) {
+          throw new Error(
+            "Sign-in succeeded, but AUTOMULA could not persist the Supabase browser session. Check browser cookie settings and Supabase SSR configuration."
+          );
+        }
+
+        const { data: persisted, error: readError } = await supabase.auth.getSession();
+        if (
+          readError ||
+          !persisted.session?.access_token ||
+          typeof persisted.session.refresh_token !== "string" ||
+          persisted.session.refresh_token.length < 20
+        ) {
+          throw new Error(
+            "Sign-in succeeded, but the browser could not read back the complete Supabase session. Check cookie storage and the Supabase SSR client configuration."
+          );
+        }
+
         router.replace("/dashboard");
         router.refresh();
       }
