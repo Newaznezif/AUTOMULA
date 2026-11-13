@@ -24,26 +24,47 @@ export function ExtensionConnectClient() {
 
     try {
       const supabase = createClient();
+      const { data: refreshed, error: refreshError } =
+        await supabase.auth.refreshSession();
 
-      // Renew the Supabase session before handing credentials to the extension.
-      // This ensures we send the latest rotated refresh token, not a stale copy.
-      const { data, error } = await supabase.auth.refreshSession();
-      const session = data.session;
-
-      if (error || !session) {
+      if (refreshError) {
         throw new Error(
-          "Your AUTOMULA sign-in could not be renewed. Sign out of AUTOMULA, sign in again, then retry the extension connection."
+          `Supabase could not refresh this browser session (${refreshError.code ?? refreshError.name}). Sign out, sign in again, and retry. If it persists, check the Supabase Auth session and cookie configuration.`
         );
       }
 
-      if (
-        typeof session.access_token !== "string" ||
-        session.access_token.length < 20 ||
-        typeof session.refresh_token !== "string" ||
-        session.refresh_token.length < 20
-      ) {
+      // Read back the persisted, rotated session rather than relying only on
+      // the refresh call's immediate response.
+      const { data: current, error: sessionError } =
+        await supabase.auth.getSession();
+
+      if (sessionError) {
         throw new Error(
-          "Your current sign-in does not contain a complete Supabase session. Sign out completely, sign in again, and retry."
+          "Supabase could not read the renewed browser session. Reload the dashboard and retry."
+        );
+      }
+
+      const session = current.session ?? refreshed.session;
+      if (!session) {
+        throw new Error(
+          "Supabase returned no active session after refresh. Sign in again and retry."
+        );
+      }
+
+      const hasAccessToken =
+        typeof session.access_token === "string" &&
+        session.access_token.length >= 20;
+      const hasRefreshToken =
+        typeof session.refresh_token === "string" &&
+        session.refresh_token.length >= 20;
+
+      if (!hasAccessToken || !hasRefreshToken) {
+        const missing = [
+          !hasAccessToken ? "access token" : "",
+          !hasRefreshToken ? "refresh token" : "",
+        ].filter(Boolean).join(" and ");
+        throw new Error(
+          `The Supabase browser session is missing a valid ${missing}. The extension has not received any credentials. This points to the dashboard's Supabase session storage/configuration, not Chrome. Contact the AUTOMULA developer with this exact message.`
         );
       }
 
