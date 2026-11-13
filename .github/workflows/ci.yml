@@ -2,16 +2,16 @@ name: AUTOMULA CI
 
 on:
   push:
-    branches: [main, phase-1-foundation, phase-2-core-workflows, phase-3-product-polish, phase-4-workspace-reliability, phase-5-e2e-functionality, phase-6-production-hardening]
+    branches: [main, phase-1-foundation, phase-2-core-workflows, phase-3-product-polish, phase-4-workspace-reliability, phase-5-e2e-functionality, phase-6-production-hardening, phase-7-extension-integration]
   pull_request:
-    branches: [main, phase-4-workspace-reliability]
+    branches: [main, phase-4-workspace-reliability, phase-6-production-hardening]
 
 permissions:
   contents: read
 
 jobs:
   validate:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -44,12 +44,10 @@ jobs:
       - name: Build extension
         run: pnpm --filter @automula/extension build
 
-      - name: Install Chromium for end-to-end tests
-        if: ${{ vars.E2E_BASE_URL != '' }}
+      - name: Install Chromium for browser tests
         run: pnpm --filter @automula/web exec playwright install --with-deps chromium
 
-      - name: Run authenticated end-to-end tests
-        if: ${{ vars.E2E_BASE_URL != '' }}
+      - name: Run browser and authenticated end-to-end tests
         env:
           E2E_BASE_URL: ${{ vars.E2E_BASE_URL }}
           E2E_EMAIL: ${{ secrets.E2E_EMAIL }}
