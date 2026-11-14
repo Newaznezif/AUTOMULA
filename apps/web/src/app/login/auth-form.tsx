@@ -67,20 +67,32 @@ export function AuthForm({ initialMode }: { initialMode: "login" | "signup" }) {
           );
         }
 
-        const session = data.session ?? stored.session;
+        const candidates = [data.session, stored.session].filter(
+          (candidate): candidate is NonNullable<typeof candidate> => candidate !== null
+        );
+        const hasValidAccessToken = (candidate: typeof data.session) =>
+          typeof candidate?.access_token === "string" && candidate.access_token.length >= 20;
+        const hasValidRefreshToken = (candidate: typeof data.session) =>
+          typeof candidate?.refresh_token === "string" && candidate.refresh_token.length >= 20;
+        const session = candidates.find(
+          candidate => hasValidAccessToken(candidate) && hasValidRefreshToken(candidate)
+        );
+
         if (!session) {
+          const responseHasRefresh = hasValidRefreshToken(data.session);
+          const storageHasRefresh = hasValidRefreshToken(stored.session);
+          if (!data.session && !stored.session) {
+            throw new Error(
+              "Supabase accepted the password sign-in but returned no browser session. Check the Supabase Auth response and session configuration."
+            );
+          }
+          if (!hasValidAccessToken(data.session) && !hasValidAccessToken(stored.session)) {
+            throw new Error(
+              "Supabase returned a session without a valid access token. The account was not redirected to the workspace."
+            );
+          }
           throw new Error(
-            "Supabase accepted the password sign-in but returned no browser session. Check the Supabase Auth response and session configuration."
-          );
-        }
-        if (typeof session.access_token !== "string" || session.access_token.length < 20) {
-          throw new Error(
-            "Supabase returned a session without a valid access token. The account was not redirected to the workspace."
-          );
-        }
-        if (typeof session.refresh_token !== "string" || session.refresh_token.length < 20) {
-          throw new Error(
-            "Supabase returned a session without a valid refresh token. The password sign-in succeeded, but the session cannot be safely renewed. Check the Supabase Auth response and browser session storage."
+            `The browser session is incomplete (sign-in response refresh token: ${responseHasRefresh ? "present" : "missing"}; persisted session refresh token: ${storageHasRefresh ? "present" : "missing"}). AUTOMULA did not continue with an unrenewable session. This isolates the issue to Supabase Auth response/session persistence.`
           );
         }
 
