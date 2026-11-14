@@ -16,8 +16,10 @@ export function AuthForm({ initialMode }: { initialMode: "login" | "signup" }) {
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    if (busy) return;
     setBusy(true);
     setMessage("");
+
     try {
       const supabase = createClient();
       const normalizedEmail = email.trim().toLowerCase();
@@ -29,13 +31,16 @@ export function AuthForm({ initialMode }: { initialMode: "login" | "signup" }) {
           options: { emailRedirectTo: `${window.location.origin}/auth/callback` }
         });
         if (error) throw error;
+
         setMessageKind("success");
         setMessage(data.session
           ? "Account created. Opening your workspace…"
           : "If this address is eligible for registration, a confirmation email will arrive. Check your inbox and spam folder.");
+
         if (data.session) {
+          // A single navigation is important: router.refresh() immediately
+          // after router.replace() can issue a second concurrent SSR request.
           router.replace("/dashboard");
-          router.refresh();
         }
       } else {
         const { data, error } = await supabase.auth.signInWithPassword({
@@ -52,44 +57,34 @@ export function AuthForm({ initialMode }: { initialMode: "login" | "signup" }) {
           throw error;
         }
 
-        // Explicitly persist the complete session returned by the password
-        // grant, then read it back. This catches browser-cookie persistence
-        // problems at login instead of discovering them later during pairing.
-        const loginSession = data.session;
-        if (
-          !loginSession?.access_token ||
-          typeof loginSession.refresh_token !== "string" ||
-          loginSession.refresh_token.length < 20
-        ) {
+        // signInWithPassword already persists the returned session through the
+        // browser client. Do not call setSession() again: it is redundant and
+        // can trigger another refresh-token operation during SSR navigation.
+        const { data: stored, error: storageError } = await supabase.auth.getSession();
+        if (storageError) {
           throw new Error(
-            "Supabase authenticated this account but did not return a complete browser session (refresh token missing). Check the Supabase Auth response and project configuration."
+            "Supabase accepted the sign-in, but AUTOMULA could not read the browser session. Reload the page and retry. If this continues, inspect browser cookie storage."
           );
         }
 
-        const { error: persistError } = await supabase.auth.setSession({
-          access_token: loginSession.access_token,
-          refresh_token: loginSession.refresh_token
-        });
-        if (persistError) {
+        const session = data.session ?? stored.session;
+        if (!session) {
           throw new Error(
-            "Sign-in succeeded, but AUTOMULA could not persist the Supabase browser session. Check browser cookie settings and Supabase SSR configuration."
+            "Supabase accepted the password sign-in but returned no browser session. Check the Supabase Auth response and session configuration."
           );
         }
-
-        const { data: persisted, error: readError } = await supabase.auth.getSession();
-        if (
-          readError ||
-          !persisted.session?.access_token ||
-          typeof persisted.session.refresh_token !== "string" ||
-          persisted.session.refresh_token.length < 20
-        ) {
+        if (typeof session.access_token !== "string" || session.access_token.length < 20) {
           throw new Error(
-            "Sign-in succeeded, but the browser could not read back the complete Supabase session. Check cookie storage and the Supabase SSR client configuration."
+            "Supabase returned a session without a valid access token. The account was not redirected to the workspace."
+          );
+        }
+        if (typeof session.refresh_token !== "string" || session.refresh_token.length < 20) {
+          throw new Error(
+            "Supabase returned a session without a valid refresh token. The password sign-in succeeded, but the session cannot be safely renewed. Check the Supabase Auth response and browser session storage."
           );
         }
 
         router.replace("/dashboard");
-        router.refresh();
       }
     } catch (error) {
       setMessageKind("error");
