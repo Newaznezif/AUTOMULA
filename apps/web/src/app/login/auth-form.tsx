@@ -70,17 +70,21 @@ export function AuthForm({ initialMode }: { initialMode: "login" | "signup" }) {
         const candidates = [data.session, stored.session].filter(
           (candidate): candidate is NonNullable<typeof candidate> => candidate !== null
         );
-        const hasValidAccessToken = (candidate: typeof data.session) =>
-          typeof candidate?.access_token === "string" && candidate.access_token.length >= 20;
-        const hasValidRefreshToken = (candidate: typeof data.session) =>
-          typeof candidate?.refresh_token === "string" && candidate.refresh_token.length >= 20;
         const session = candidates.find(
-          candidate => hasValidAccessToken(candidate) && hasValidRefreshToken(candidate)
+          candidate =>
+            typeof candidate.access_token === "string" &&
+            candidate.access_token.length >= 20 &&
+            typeof candidate.refresh_token === "string" &&
+            candidate.refresh_token.length >= 20
         );
 
         if (!session) {
-          const responseHasRefresh = hasValidRefreshToken(data.session);
-          const storageHasRefresh = hasValidRefreshToken(stored.session);
+          const responseHasRefresh =
+            typeof data.session?.refresh_token === "string" &&
+            data.session.refresh_token.length >= 20;
+          const storageHasRefresh =
+            typeof stored.session?.refresh_token === "string" &&
+            stored.session.refresh_token.length >= 20;
           if (!data.session && !stored.session) {
             throw new Error(
               "Supabase accepted the password sign-in but returned no browser session. Check the Supabase Auth response and session configuration."
