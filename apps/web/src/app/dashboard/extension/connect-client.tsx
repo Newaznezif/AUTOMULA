@@ -24,31 +24,40 @@ export function ExtensionConnectClient() {
 
     try {
       const supabase = createClient();
-      const { data: refreshed, error: refreshError } =
-        await supabase.auth.refreshSession();
-
-      if (refreshError) {
-        throw new Error(
-          `Supabase could not refresh this browser session (${refreshError.code ?? refreshError.name}). Sign out, sign in again, and retry. If it persists, check the Supabase Auth session and cookie configuration.`
-        );
-      }
-
-      // Read back the persisted, rotated session rather than relying only on
-      // the refresh call's immediate response.
+      // Reuse the browser's current session. Forcing refresh here can race
+      // with Next.js middleware, which also owns SSR token refresh.
       const { data: current, error: sessionError } =
         await supabase.auth.getSession();
 
       if (sessionError) {
         throw new Error(
-          "Supabase could not read the renewed browser session. Reload the dashboard and retry."
+          "Supabase could not read the browser session. Reload the dashboard and retry."
         );
       }
 
-      const session = current.session ?? refreshed.session;
+      let session = current.session;
       if (!session) {
         throw new Error(
-          "Supabase returned no active session after refresh. Sign in again and retry."
+          "Supabase returned no active browser session. Sign in again and retry."
         );
+      }
+
+      const expiresAt = session.expires_at ?? 0;
+      if (expiresAt <= Math.floor(Date.now() / 1000) + 60) {
+        const { data: refreshed, error: refreshError } =
+          await supabase.auth.refreshSession();
+
+        if (refreshError) {
+          throw new Error(
+            `Supabase could not refresh this browser session (${refreshError.code ?? refreshError.name}). Sign in again and retry.`
+          );
+        }
+        if (!refreshed.session) {
+          throw new Error(
+            "Supabase returned no session after refreshing an expired browser session."
+          );
+        }
+        session = refreshed.session;
       }
 
       const hasAccessToken =
