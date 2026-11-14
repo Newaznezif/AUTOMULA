@@ -79,6 +79,12 @@ export function AuthForm({ initialMode }: { initialMode: "login" | "signup" }) {
         );
 
         if (!session) {
+          const responseHasAccess =
+            typeof data.session?.access_token === "string" &&
+            data.session.access_token.length >= 20;
+          const storageHasAccess =
+            typeof stored.session?.access_token === "string" &&
+            stored.session.access_token.length >= 20;
           const responseHasRefresh =
             typeof data.session?.refresh_token === "string" &&
             data.session.refresh_token.length >= 20;
@@ -90,7 +96,7 @@ export function AuthForm({ initialMode }: { initialMode: "login" | "signup" }) {
               "Supabase accepted the password sign-in but returned no browser session. Check the Supabase Auth response and session configuration."
             );
           }
-          if (!hasValidAccessToken(data.session) && !hasValidAccessToken(stored.session)) {
+          if (!responseHasAccess && !storageHasAccess) {
             throw new Error(
               "Supabase returned a session without a valid access token. The account was not redirected to the workspace."
             );
